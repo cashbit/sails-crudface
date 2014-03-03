@@ -1,0 +1,73 @@
+<% if (field.type == 'detail') { %>
+							<fieldset enabled>
+								
+								<% if (field.label) { %>
+								<h3 class="pull-left"><%= field.label %></h3>
+								<% } %>
+								
+							<table class='table' style="margin-bottom:0px">
+								<tr>
+									<% var mode = "i" ; %>
+									<% _.each(field.fields, function(detailfield) { %> 
+											<th><%= detailfield.label ? detailfield.label : detailfield.name %></th>
+									<% }) %>		
+									<th></th>
+									
+									<th>
+										<% if (!field.destroyEnabled){
+											if (field.addEnabled) { %>
+										<a class="btn btm-sm btn-info" href="/<%= field.model %>/new?<%= field.key %>=<%= record.id %>&returnUrl=/<%= controller %>/show/<%= record.id %>">Add</a>
+										<% }} %>
+									</th>
+									<% if (field.destroyEnabled){ %>
+									<th>
+										<% if (field.addEnabled) { %>
+										<a class="btn btm-sm btn-info" href="/<%= field.model %>/new?<%= field.key %>=<%= record.id %>&returnUrl=/<%= controller %>/show/<%= record.id %>">Add</a>
+										<% } %>
+									</th>
+									<% } %>
+								</tr>
+								
+
+								<% _.each(field.records, function(detailrecord) { %>
+								<tr data-id="<%= detailrecord.id %>" data-model="record">
+									<% var mode = "i" ; %>
+									<% _.each(field.fields, function(detailfield) { %> 
+									<% 
+										var path = detailfield.name.split(".") ;
+										if (detailrecord[path[0]] !== undefined){
+											var value = detailrecord[path[0]] ;
+											for (var i=1;i<path.length;i++){
+												if (value[path[i]] !== undefined) value = value[path[i]] ;
+											}
+											
+											if (value !== undefined) {	
+												if (value !== null) value = value.crudRender ? value.crudRender() : value;
+											}
+										}
+									%>
+											<td><%= value ? value : "" %></td>
+									<% }) %>	
+									
+									<td><a href="../../<%= field.model %>/show/<%= detailrecord.id %>" class="btn btn-sm btn-primary">Show</a></td>
+									<td><a href="../../<%= field.model %>/edit/<%= detailrecord.id %>?returnUrl=/<%= controller %>/show/<%= record.id %>" class="btn btn-sm btn-warning">Edit</a></td>
+									<% if (field.destroyEnabled){ %>
+									<td style="width:82px"><form action="../../<%= field.model %>/destroyAction/<%= detailrecord.id %>" method="POST">
+										<input type="hidden" name="method" value="<%= field.destroyMethod %>"/>
+										<input type="hidden" name="returnUrl" value="/<%= controller %>/show/<%= record.id %>" />
+										<input type="hidden" name="key" value="<%= field.key %>" />
+										<input type="hidden" name="model" value="<%= field.model %>" />
+										<input id="deletebtn_<%= detailrecord.id %>" type="button" class="delconfirmbtn<%= detailrecord.id %> btn btn-sm btn-danger" value="<%= field.destroyMethod == 'detach' ? 'Detach' : 'Delete' %>" onclick="$('.delconfirmbtn<%= detailrecord.id %>').toggleClass('hidden');"/>
+										
+										<input id="confirm_btn<%= detailrecord.id %>"type="submit" class="delconfirmbtn<%= detailrecord.id %> btn btn-sm btn-danger hidden" value="Confirm"/>
+										
+										<input type="hidden" name="_csrf" value="<%= _csrf %>" />
+									</form></td>
+									<% } %>
+
+								</tr> 
+
+								<% }) %>
+							</table>
+							</fieldset>
+						<% } %>

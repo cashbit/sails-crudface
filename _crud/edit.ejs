@@ -1,0 +1,114 @@
+<div class="container">
+	<h2 class="form-signin-heading">Editing a <%= prettyName %></h2>
+	<form action="../updateAction/<%= record.id %>" method="POST" role="form" class="">
+		<input type="hidden" name="returnUrl" value="<%= returnUrl %>" />
+		<% var mode = "e" %>
+		<% _.each(fieldlayout, function(section) { %> 
+			
+			<% if (section.section) { %><h4><%= section.section %></h4><% } %>
+			<% if (section.section) { %>
+			<div class="well">
+			<% } %>
+			<% _.each(section.rows, function(row) { %> 
+				<div class="row">
+					<fieldset>
+					<% for (var control in row) { %>
+						<% var width = row[control] ; %>
+						<div class="col-md-<%= width %>">
+							<% for (var i=0;i<fields.length;i++) if (fields[i].name == control) var field = fields[i] ; %> 
+
+							<% if (field.type == 'text' || field.type == 'link') { %>
+								<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
+								<input type="text" class="form-control " placeholder="<%= field.label ? field.label : field.name %>" name="<%= field.name %>" value="<%= record[field.name] != "undefined"  ? record[field.name] : "" %>"/>
+							<% } %>
+
+
+							<% if (field.type == 'read-only-text') { %>
+								<fieldset disabled>
+									<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
+									<input type="text" class="form-control " placeholder="<%= field.label ? field.label : field.name %>" name="<%= field.name %>" value="<%= record[field.name] != "undefined" ? record[field.name] : "" %>"/>
+								</fieldset>
+							<% } %>
+
+							<% if (field.type == 'textarea') { %>
+								<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
+								<textarea class="form-control" name="<%= field.name %>"><%= record[field.name] ? record[field.name] : "" %></textarea>
+							<% } %>
+
+
+							<% if (field.type == 'checkbox') { %>
+								<h8>&nbsp;</h8>
+								<div class="checkbox">
+									<label>
+										<input type="checkbox" name="<%= field.name %>" <%= field.checked ? "checked" : "" %> ></input>
+								    	<%= field.label ? field.label : field.name %>
+									</label>
+								</div>
+							<% } %>
+
+							<% if (field.type == 'select') { %>
+								<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
+								<div class="bfh-selectbox hidden" data-name="<%= field.name %>" data-value="<%= record[field.name] ? record[field.name] : "" %>" data-filter="true">
+									<div class="bfh-selectbox-option" data-value=""></div>
+									<% _.each(field.options, function(option) { %>
+										<div class="bfh-selectbox-option" data-value="<%= option.id ? option.id : option %>"><%= option.id ? option.text : option %></div>
+									<% }) %>
+								</div>
+							<% } %>
+
+							<% if (field.type == 'read-only-select') { %>
+							<fieldset disabled>
+								<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
+								<div class="bfh-selectbox hidden disabled" data-name="<%= field.name %>" data-value="<%= record[field.name] ? record[field.name] : "" %>" data-filter="true">
+									<div class="bfh-selectbox-option" data-value=""></div>
+									<% _.each(field.options, function(option) { %>
+										<div class="bfh-selectbox-option" data-value="<%= option.id ? option.id : option %>"><%= option.id ? option.text : option %></div>
+									<% }) %>
+								</div>
+							</fieldset>
+							<input type="hidden" id="<%= field.name %>" name="<%= field.name %>" value="<%= record[field.name] ? record[field.name] : "" %>" />
+							<% } %>
+
+							
+							<% if (field.type == 'date') { %>
+								<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
+								<div class="bfh-datepicker" data-name="<%= field.name %>" data-date="<%= record[field.name] ? record[field.name].crudRender() : (field.defaultValue ? field.defaultValue : '') %>" data-format="<%= locale.dateFormat %>"></div>
+							<% } %>
+
+							
+							<% if (field.type == 'buttongroup') { %>
+								<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
+								<div class="btn-group btn-group-justified">
+								<input type="hidden" id="<%= field.name %>" name="<%= field.name %>" value="<%= record[field.name] ? record[field.name] : "" %>" />
+
+								<% _.each(field.options, function(option) { %>
+								<a id="ptypebutton_<%= field.name %>_<%= option.id ? option.id : option %>"  href="javascript:_crud.ActivateSelectedButton('<%= option.id ? option.id : option %>','<%= field.name %>')" class="ptypebutton_<%= field.name %> btn btn-default">
+									<div class=""><%= option.id ? option.text : option %></div>
+								</a>
+								<% }) %> 
+
+								</div>
+							<% } %>
+
+
+						</div>
+					<% } %>
+					</fieldset>
+				</div>
+			<% }) %>
+			<% if (section.section) { %>
+			</div>
+			<% } %>
+		<% }) %>
+		<br />
+		<div class="row">
+			<div class="col-md-6">
+				<input type="button" class="btn btn-lg btn-danger btn-block" value="Cancel" onclick="javascript:history.back()"/>
+			</div>
+			<div class="col-md-6">
+				<input type="submit" class="btn btn-lg btn-primary btn-block" value="Save"/>
+			</div>
+		</div>
+		<input type="hidden" name="_csrf" value="<%= _csrf %>" />
+	</form>
+</div>

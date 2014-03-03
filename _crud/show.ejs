@@ -1,0 +1,141 @@
+<div class='container'>
+	<br />
+	<div class="row">
+		<div class="col-md-10">
+			<h2 style="margin-top:0px;margin-bottom:0px"><a href=".."><%= prettyName %></a></h2>
+		</div>
+		<div class="col-md-1">
+			<a class="btn btn-sm btn-primary pull-right" href="../edit/<%= record.id %>">Edit</a>
+		</div>
+		<div class="col-md-1">
+			<form class="pull-right" action="../destroyAction/<%= record.id %>" method="POST">
+				<input type="hidden" name="_method" value="delete"/>
+				<input id="deletebtn_<%= record.id %>" type="button" class="delconfirmbtn<%= record.id %> btn btn-sm btn-danger" value="Delete" onclick="$('.delconfirmbtn<%= record.id %>').toggleClass('hidden');"/>
+				<input id="confirm_btn<%= record.id %>"type="submit" class="delconfirmbtn<%= record.id %> btn btn-sm btn-danger hidden" value="Confirm"/>
+				<input type="hidden" name="_csrf" value="<%= _csrf %>" />
+			</form>
+		</div>
+	</div>
+	<% var mode = "s" ; var sectionCount = 0; %>
+	<script>var crudTitle = '<%= record.name ? record.name : prettyName %>'</script>
+	<% _.each(fieldlayout, function(section) { sectionCount++%> 
+		<% var hidden = section.config.hidden ? "hidden" : "" ; %>
+		<% if (section.section) { %><h4><%= section.section %></h4><% } %>
+			<% if (section.section) { %>
+			<div id="section_<%= sectionCount %>" class="well <%= hidden %>">
+			<% } %>
+			<% _.each(section.rows, function(row) { %> 
+				<div class="row">
+					
+					<% for (var control in row) { %>
+						<% var width = row[control] ; %>
+						<div class="col-md-<%= width %>">
+							<% for (var i=0;i<fields.length;i++) if (fields[i].name == control) var field = fields[i] ; %> 
+
+							<% if (field.type == 'link') { %>
+								<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
+								<p class="form-control-static"><a href="<%= field.protocol ? field.protocol : "" %><%= record[field.name] ? record[field.name] : "" %>"><%= record[field.name] ? record[field.name] : "" %></a></p>
+							<% } %>
+
+							<% if (field.type == 'button'){ %>
+								<h4><a name="<%= field.name %>" class="btn btn-lg btn-info btn-block" href="../<%= field.action %>/<%= record.id %>"><%= field.name %></a></h4>
+							<% } %>
+
+							<% if (field.type == 'text' || field.type == 'read-only-text') { %>
+								<fieldset disabled>
+									<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
+									<input type="text" class="form-control " placeholder="<%= field.label ? field.label : field.name %>" name="<%= field.name %>" value="<%= record[field.name] != "undefined" ? record[field.name] : "" %>"/>
+								</fieldset>
+							<% } %>
+
+							<% if (field.type == 'select' || field.type == 'read-only-select') { %>
+								
+									<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
+									<%
+									var value = "" ;
+									var lookUpUrl = false ;
+									if (record[field.name] !== undefined){
+										var fieldName = field.relationship.inname ;
+										value = record[field.name][fieldName] ;
+										lookUpUrl = "/" + field.relationship.entity + "/show/" + record[field.name].id ;
+									}
+									%>
+									<div class="input-group">
+										<fieldset disabled>
+									      <input type="text" class="form-control" placeholder="<%= field.label ? field.label : field.name %>" name="<%= field.name %>" value="<%= value %>">
+									    </fieldset>
+									    <% if (lookUpUrl) { %>
+								      	<span class="input-group-btn">
+									    	<a class="btn btn-default" type="button" href="<%= lookUpUrl %>">&gt;&gt;</a>
+									    </span>
+									    <% } %>
+		
+									</div>
+								
+							<% } %>
+
+							<% if (field.type == 'textarea') { %>
+								<fieldset disabled>
+									<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
+									<textarea class="form-control" name="<%= field.name %>"><%= record[field.name] ? record[field.name] : "" %></textarea>
+								</fieldset>
+							<% } %>
+
+
+							<% if (field.type == 'checkbox') { %>
+								<fieldset disabled>
+									<h8>&nbsp;</h8>
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" name="<%= field.name %>" <%= field.checked ? "checked" : "" %> ></input>
+									    	<%= field.label ? field.label : field.name %>
+										</label>
+									</div>
+								</fieldset>
+							<% } %>
+
+					
+							<% if (field.type == 'delme_date') { %>
+								<fieldset disabled>
+									<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
+									<div class="bfh-datepicker" data-name="<%= field.name %>" data-date="<%= record[field.name] ? record[field.name].crudRender() :  (field.defaultValue ? field.defaultValue : '') %>" data-format="<%= locale.dateFormat %>"></div>
+								</fieldset>
+							<% } %>
+
+							<% if (field.type == 'date') { %>
+								<fieldset disabled>
+									<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
+									<input type="text" class="form-control " placeholder="<%= field.label ? field.label : field.name %>" name="<%= field.name %>" value="<%= record[field.name] ? record[field.name].crudRender() : "" %>"/>
+								</fieldset>
+							<% } %>
+
+							
+							<% if (field.type == 'buttongroup') { %>
+								<fieldset disabled>
+									<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
+									<div class="btn-group btn-group-justified">
+										<input type="hidden" id="<%= field.name %>" name="<%= field.name %>" value="<%= record[field.name] ? record[field.name] : "" %>" />
+
+										<% _.each(field.options, function(option) { %>
+										<a id="ptypebutton_<%= field.name %>_<%= option.id ? option.id : option %>"  href="javascript:_crud.ActivateSelectedButton('<%= option.id ? option.id : option %>','<%= field.name %>')" class="ptypebutton_<%= field.name %> btn btn-default">
+											<div class=""><%= option.id ? option.text : option %></div>
+										</a>
+										<% }) %>
+									</div>
+								</fieldset>
+							<% } %>
+
+
+
+							<% include details.ejs %>
+
+						</div>
+					<% } %>
+
+				</div>
+			<% }) %>
+			<% if (section.section) { %>
+			</div>
+			<% } %>
+	<% }) %>	
+</div>

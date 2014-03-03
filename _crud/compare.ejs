@@ -1,0 +1,135 @@
+<script>var crudTitle = '<%= prettyName %>';</script>
+
+<div class="container">
+
+	<div class="row">
+		<div class="col-md-12">
+			<h3 class="pull-left"><%= prettyName %></h3>
+			<h3 class="pull-right">
+				<a class="btn btm-sm btn-info" href="/<%= controller %>/new">Add</a>
+			</h3>
+		</div>
+	</div>
+
+
+	<div class="well">
+		<form class="form" role="form" action="../<%= controller %>/compare" method="GET">
+			<div class="row">
+				<div class="col-md-7">
+					<label class="control-label" for="__viewlimit">Free text</label>
+					<input class="form-control" type="text" name="__freetext" value="<%= freetext %>" />
+				</div>
+<!--
+				<div class="col-md-1">
+					<label class="control-label" for="__viewpage">Page</label>
+					<input class="form-control" type="text" name="__viewpage" value="<%= viewpage %>" />
+				</div>
+				<div class="col-md-1">
+					<label class="control-label" for="__viewpage">Pages</label>
+					<input class="form-control" type="text" name="__pagecount" value="<%= pagecount %>" />
+				</div>
+		-->
+				<div class="col-md-2">
+					<label class="control-label" for="__viewlimit">Max</label>
+					<input class="form-control" type="text" name="__viewlimit" value="<%= viewlimit %>" />
+				</div>
+				
+				<div class="col-md-2">
+					<fieldset disabled>
+					<label class="control-label " for="__totres">Tot</label>
+					<input class="form-control" type="text" name="__totres" value="<%= recordcount %>" />
+					</fieldset>
+				</div>
+				
+
+				<div style="margin-top:24px" class="text-right col-md-1">
+					<input class="btn btn-info" type="submit" name="search" value="Search" />
+				</div>
+			</div>
+
+			<div class="row">
+				
+				<% var width = Math.floor(12/facets.length) > 1 ? Math.floor(12/facets.length) : 2 ;%>
+				<% _.each(facets, function(facet) { %>
+
+				<div class="col-md-<%=  width %>">
+					<label class="control-label" for="<%= facet.config.field %>"><%= facet.config.caption %></label>
+					<div class="bfh-selectbox hidden" data-name="<%= facet.config.field %>" data-value="<%= facet.selectedvalue %>" data-filter="true">
+						<div class="bfh-selectbox-option" data-value="">(ALL)</div>
+						<% _.each(facet.values, function(value) { %>
+							<div class="bfh-selectbox-option" data-value="<%= value.value %>"><%= value.option %> <%= value.count >-1 ? "(" + value.count + ")" : "" %></div>
+						<% }) %>
+					</div>
+				</div>
+				<% }) %>
+			</div>
+		</form>
+	</div>
+
+	<div class="well">
+		<% 	var buttonWidth = 2 ;
+			var colsPerRow = 12 ;
+			var col = 0 ;
+			var rows = [] ;
+			var row = [] ;
+			var sortedRecords = records ;
+
+			if (compareConfig.rankingFieldName){
+				sortedRecords = _.sortBy(records,function(a,b){
+					if (a[compareConfig.rankingFieldName] < b[compareConfig.rankingFieldName])
+					     return -1;
+					  if (a[compareConfig.rankingFieldName] > b[compareConfig.rankingFieldName])
+					    return 1;
+					  return 0;
+				}) ;
+			}
+
+			_.each(sortedRecords, function(record) {
+				var buttonTitle = record[compareConfig.labelFieldName].crudRender() ;
+				var buttonHref = "/" + compareConfig.modelName + "/show/" + record[compareConfig.objectIdFieldName]
+				var buttonClassName = "alert-info" ;
+				if (compareConfig.rankingFieldName){
+					var ranking = record[compareConfig.rankingFieldName] ;
+					console.log("==== R:"+ ranking);
+					for (var rl = compareConfig.rankingLevels.length-1; rl>=0; rl--){
+						if (ranking <= compareConfig.rankingLevels[rl].ranking){
+							buttonClassName = "alert-" + compareConfig.rankingLevels[rl].class ;
+						}
+					}
+				}
+				var button = {
+					buttonTitle : buttonTitle,
+					buttonHref : buttonHref,
+					buttonClassName : buttonClassName
+				}
+				row.push(button) ;
+				col += buttonWidth ;
+				if (col >= colsPerRow){
+					col = 0 ;
+					rows.push(row) ;
+					row = [] ;
+				}
+			})
+
+			if (row.length > 0){
+				rows.push(row) ;
+			}
+
+			_.each(rows,function(row){ %>
+				<div class="row">
+				<% _.each(row,function(col){ %>
+					<div class="col-md-<%= buttonWidth %>">
+						<div class="alert <%= col.buttonClassName %>">
+							<div style="max-height:60px;overflow:hidden">
+								<a href="<%= col.buttonHref %>" title="<%= col.buttonTitle %>">
+									<small><%= col.buttonTitle %></small>
+								</a>
+							</div>
+						</div>
+					</div>
+				<% }) %>
+				</div>
+			<% }) %>
+	</div>
+
+</div>

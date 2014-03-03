@@ -1,0 +1,23 @@
+<% 
+	function dateFormatFromLocale(inputDate,defaultValue){
+		var dateStringValue = defaultValue ;
+		var inputDate = record[field.name] ;
+		if (typeof(inputDate.getDate) === "function"){
+			var outputDateElements = [] ;
+			var dateFormatPositions = locale.dateFormat.split('/') ;	
+			for (var i=0;i<dateFormatPositions.length;i++){
+				if (dateFormatPositions[i] == 'd'){
+					outputDateElements.push(inputDate.getDate()) ;
+				}
+				if (dateFormatPositions[i] == 'm'){
+					outputDateElements.push(inputDate.getMonth()+1) ;
+				}
+				if (dateFormatPositions[i] == 'y'){
+					outputDateElements.push(inputDate.getFullYear()) ;
+				}
+			}
+			dateStringValue = outputDateElements.join('/') ;
+		}
+		return dateStringValue ;
+	}
+%>
