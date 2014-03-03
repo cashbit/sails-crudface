@@ -73,3 +73,12 @@ Set the new file content with:
     ]
 }
 ```
+
+#### 4. Create the contact view folder
+
+In order to display the user interface the module needs a view folder with the same name of the model.
+So copy the ```_crudtemplate``` folder in the ```contact```.
+
+#### 5. Run your sails project
+
+```sails lift```
