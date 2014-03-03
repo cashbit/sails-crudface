@@ -1,4 +1,4 @@
 sails-crudface
 ==============
 
-A node module for sailsjs for systematic scrud interface generation
+A sailsjs node module for "systematic" scrud interface generation
