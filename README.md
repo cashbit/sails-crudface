@@ -174,7 +174,7 @@ An example follow to show the five first level elements for the configuration:
 }
 ```
 
-#### What is "ines" ?
+#### Who is "ines" ?
 
 (i)ndex | (n)ew | (e)dit | (s)how = "ines".
 
@@ -262,3 +262,76 @@ The view will show a new dropdown menu in the search section (and a new buttongr
 The user can "select" the department for each contact while creating or editing the contact by clicking the respective button in the new button group named "department".
 
 The user can "filter" the index view using the dropdown and selecting one of the existing options. Options are populated directly from the present values in the ```department``` field for each row. For each option is visible a "count" of corresponding rows.
+
+#### layout
+
+One of the more difficult things trying developing a responsive user interface for data entry,search and update is deciding and describing a responsive layout.
+
+Using the "[Bootstrap grid system](http://getbootstrap.com/css/#grid)" we found a good solution (or we think so) to the problem.
+
+In the actual configuration, without layout specifications, all the fields are distributed in a top-down vertical layout, using the 100% page width.
+
+Let's make an example organizing the layout of the contact example.
+
+Put we want a first section for ```firstname``` and ```lastname```, both on the same row, another section named "Details" for the contacts fields (```email```,```phone```), ```birthdate``` and ```department```.
+
+This is the resulting configuration:
+
+```
+{
+    "prettyName"  : "Contact",
+        
+    "facets": [
+        {"field": "department", "option": "department", "caption":"Department"}
+    ],
+    
+	"layout" : [
+        {
+          "section": "", "rows": [
+            {"firstname":6, "lastname":6}
+          ]
+        },
+        {
+            "section":"Details","rows":[
+                {"email":8, "phone":4},
+                {"birthdate":4,"department":8},
+            ]
+        }
+    ],
+        
+    "fieldsConfig": [
+        {"name": "firstname", "ines": "ines", "type": "text", "inname":true},
+        {"name": "lastname", "ines": "ines", "type": "text"},
+        {"name": "email", "ines": "nes", "type": "text"},
+        {"name": "phone", "ines": "nes", "type": "text"},
+        {"name": "birthdate", "ines":"nes", "type": "date"},
+        {
+        	"name": "department", 
+        	"ines":"ines", 
+        	"type":"buttongroup", 
+        	"options":["Admin","Development","Sales"]
+        }
+    ]
+}
+```
+
+Each element in the ```layout``` array has two properties: 
+
+- ```section```: (can be blank) is the caption for the section, a group of rows
+- ```rows```: each row can have one or more fields.
+
+Each field specifies the width that the relative control will use in the grid.
+The total width of each row is 12 (as described in the Bootstrap grid system).
+So ```firstname:6``` specifies that we want the width equal to 50% of the page.
+
+This means also that:
+
+- the minimum with for each control is 1
+- we can have at least 12 controls of with=1 for each row
+- the maximum with for each control is 12
+- a good distribution of fields yeld always 12 as the sum of the width of each field in a row
+
+Try the above example opening the ```contact``` show view both in a desktop browser and in your mobile browser to see the responsive layout (or simply try to reduce the with of the browser window to a minimum 320px).
+
+
+
