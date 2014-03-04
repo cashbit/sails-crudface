@@ -507,7 +507,10 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
           var fielddefined = (req.param(field) !== '') && (req.param(field) != 'undefined') && (req.param(field) !== undefined) ;
           if (fielddefined){
             if (!filter.where) filter['where'] = {} ;
-            var attribute = sails.models[controller.exports.identity]._attributes[field] ;
+            var attribute = false ;
+            if (sails.models[controller.exports.identity]._attributes){
+                attribute = sails.models[controller.exports.identity]._attributes[field] ;
+            } 
             var isString = false ;
             var isBoolean = false ;
             if (attribute){

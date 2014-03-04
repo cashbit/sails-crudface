@@ -1,11 +1,16 @@
 sails-crudface
 ==============
 
-**A sails node module for "systematic" scrud interface generation with MWC architecture.**
+**A sails node module for "systematic" scrud interface generation with MVC architecture.**
 
 If you want sails generate views on the fly for your models, you can use this module and create a configuration file describing the fields and the layout you need for every controller/model.
 
-The user interface is plain and responsive HTML with [jQuery](http://jquery.com/download/) and [Bootstrap](http://getbootstrap.com/getting-started/#download)
+Often for data entry is not needed complexity but simplicity.
+Also, writing the code for the view part of the MVC architecture is a repetitive task, because you may want a standard layout for toolbars, buttons, lists, and so on.
+
+sails-crudface automates the task of creating the user interface for search and entry of data.
+
+The resulting user interface is plain and responsive HTML with [jQuery](http://jquery.com/download/) and [Bootstrap](http://getbootstrap.com/getting-started/#download)
 
 #### REST Approach
 
@@ -185,7 +190,7 @@ Because the ```index``` view shows a list of records (aka objects) you may want 
 In the given contact example, the fields the user see in the list are ```firstname``` and ```lastname```.
 The ```email```,```phone```,```birthdate``` fields are not visible in the ```index``` view.
 
-#### textSearchFields
+### textSearchFields
 
 This property of the Crud configuration file teach the controller (and to the view) wich fields of the model are searchable. For the above contact example, you can set this property as follows:
 
@@ -227,7 +232,7 @@ The following example search only the ```firstname``` field.
 }
 ```
 
-#### facets
+### facets
 
 Try this example:
 
@@ -263,7 +268,7 @@ The user can "select" the department for each contact while creating or editing 
 
 The user can "filter" the index view using the dropdown and selecting one of the existing options. Options are populated directly from the present values in the ```department``` field for each row. For each option is visible a "count" of corresponding rows.
 
-#### layout
+### layout
 
 One of the more difficult things trying developing a responsive user interface for data entry,search and update is deciding and describing a responsive layout.
 
@@ -294,7 +299,7 @@ This is the resulting configuration:
         {
             "section":"Details","rows":[
                 {"email":8, "phone":4},
-                {"birthdate":4,"department":8},
+                {"birthdate":4,"department":8}
             ]
         }
     ],
@@ -333,5 +338,190 @@ This means also that:
 
 Try the above example opening the ```contact``` show view both in a desktop browser and in your mobile browser to see the responsive layout (or simply try to reduce the with of the browser window to a minimum 320px).
 
+### fieldsConfig
 
+The array containing the complete list of controls of the view.
+
+As mentioned above, each list element must have at least 3 properties:
+
+- ```name```: the model 'fieldname' where the entered data will be stored and later readed
+- ```type```: the kind of control will be displayed (textfield, calendar, dropdown, ...)
+- ```ines```: in witch view the control will be displayed (see above: Who is ines?)
+
+An optional property is ```label```, so you can decide a decent label for each control regardless the name, example:
+
+```
+{"name": "firstname", "ines": "ines", "type": "text", "label":"First name"}
+```
+
+As mentioned above, the ```label``` property will be localized according to the ```config/locales/``` settings.
+
+#### The "type" property
+
+This property define the kind of control will be displayed. Valid types are:
+
+- ```text```: to display and edit text and numbers
+- ```read-only-text```: as above, to display only
+- ```link```: to display an url and automatically creating the ```<a>``` element
+- ```date```: to display and edit dates with a calendar
+- ```textarea```: to display and edit text on more than one line
+- ```checkbox```: to display and edit booleans
+- ```select```: to display and select values from a list (with or without relationship/association)
+- ```read-only-select```: as above, but to display only
+- ```buttongroup```: same as ```select```, but for small amount of options
+- ```button```: can call a custom action in the underlying controller
+- ```detail```: to display records (objects) from a one-to-many relationship/association
+
+#### Examples
+
+##### type: text
+
+```
+{"name": "firstname", "ines": "ines", "type": "text", "label":"First name"}
+```
+
+##### type: read-only-text
+
+```
+{"name": "firstMeetingNotes", "s": "ines", "type": "read-only-text"}
+```
+Useful to display calculated values, or one-time-editing fields, like in the example below: 
+
+```
+...
+{"name": "firstMeetingNotes", "ines": "n", "type": "text"},
+{"name": "firstMeetingNotes", "ines": "es", "type": "read-only-text"}
+...
+```
+In this example the field is defined two times, the first will be used in the ```new``` view (during record creation) and the second both in the ```edit``` and ```show``` view.
+
+
+##### type: link
+
+```
+{"name": "website", "ines": "ines", "type": "link"}
+```
+In the ```new``` and ```edit``` views will be displayed as the type:text, otherwise will be displayed as an ```<a>``` element.
+
+##### type: textarea
+
+```
+{"name": "notes", "ines": "nes", "type": "textarea"}
+```
+
+##### type: checkbox
+
+```
+{"name": "vip", "ines": "ines", "type": "checkbox"}
+```
+The corresponding values for the checked and unchecked state are, by default, ```true``` and ```false```.
+If you need to store and retrieve different values you can specify the properties like in the example below:
+
+```
+{"name": "vip", "ines": "ines", "type": "checkbox", "checkedValue":"YES","uncheckedValue":"NO"}
+```
+
+##### type: select
+```
+{
+	"name": "department", 
+    "ines":"ines", 
+    "type": "select",
+   	"options":["Admin","Development","Sales"]
+}
+```
+This is a particular kind, because it change the behavior depending the kind of view:
+
+- ```new```: presents a drop-down list, with no value selected
+- ```edit```: presents a drop-down list, with the selected value according the value stored in the model
+- ```show```: presents a read-only-text field with a button ```>>``` on the right if the content of the dropdown list is populated from a relationship/association (see below: ```options```)
+- ```index```: presents the value according the value stored in the model and eventually looks-up the value in the model from the other side of the relationship (see below:```options```)
+
+###### options
+
+The ```options``` property defines how the "option" tags are populated in the html ```<select>``` element. 
+
+You can use a simple array of flat strings like below:
+
+```
+	"options":["Admin","Development","Sales"]
+```
+ 
+or a more complex array with objects, like below:
+
+```
+	"options":[
+		{"id":"0","text":"poor"},
+		{"id":"1","text":"fair"},
+		{"id":"2","text":"good"}
+	]
+```
+In this case, the value stored in the model will be "0","1" or "2", but the drop-down list will be populated with "poor","fair","good".
+
+Another way to populate a dropdown list is ```relationship```, like in the example below:
+
+```
+{
+	"name": "customer", 
+	"type": "select",
+	"ines": "nes", 
+	"relationship": {
+		"entity": "customer",
+		"inname": "name",
+		"filter":{}
+	}
+}
+```
+In this case, you must provide a model called "customer" where the controller will find the list of customer to display in the drop-down list.
+
+The list is filtered with the ```filter``` expression, the drop-down list values are populated with the ids of records(objects) and the option value with the ```inname``` field. 
+
+This means that if the "customer" record/object has a field "name", the value of that field will appear in the drop-down list, but the value stored in the contact record is the id of the selected customer in the drop-down list.
+
+##### type: read-only-select
+
+This kind of control is used mainly to provide an hypertext link to the releated record in relationship->entity.
+It cannot be edited from the user.
+
+##### type: buttongroup
+
+This kind of control presents a list of buttons. The specifications are the same of the type "select", example:
+
+```
+{
+	"name": "projecttype", 
+	"type": "buttongroup",
+	"ines": "nes", 
+	"relationship": {
+		"entity": "projecttype",
+		"inname": "name",
+		"filter":{}
+	}
+}
+```
+
+##### type: button
+
+This kind of control crates a button with an underlying url, composed by the controller url and the ```action``` property, see example:
+
+```
+{"name": "Normalize contact","ines":"s","type":"button","action":"normalize"}
+```
+The underlying url will be: ```http://localhost:1337/contact/normalize/52fa26c7322e9fe034000027```
+
+In the example, the "normalize" action is implemented in the controller, see example:
+
+
+```
+module.exports = require('sails-crudface').init(module,__dirname) ;
+
+module.exports.normalize = function(req,res,next){
+	...
+	...
+	// your code here
+	...
+	...
+	
+};
+```
 
