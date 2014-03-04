@@ -73,7 +73,7 @@ The following steps are needed to add the necessary assets to your sails project
 1. Install [jQuery](http://jquery.com/download/) and add the ```'linker/js/jquery.js',``` line in the ```Gruntfile.js``` after the ```'linker/js/app.js',``` line.
 2. Goto the ```components``` folder in ```node_modules/sails-crudface```
 2. Copy the ```_crud.js``` file in the ```assets/js``` folder of your sails project
-3. Add the ```bootstrap``` CSS ([download](http://getbootstrap.com/getting-started/#download)), to layout.ejs
+3. Add the ```bootstrap``` CSS ([download](http://getbootstrap.com/getting-started/#download)), copy all the sobfolders (js,fonts,style in the ```assets/linker```)
 4. Add the ```bootstrap form helpers``` ([download](http://bootstrapformhelpers.com/)) (free version it's OK)
 3. Update the ```view/layout.ejs``` file in order to load jQuery.js and _crud.js
 3. The module contains two sub-folders:```_crud``` and ```_crudtemplates```, **copy both subfolders** in the ```view``` folder of your sails project.
@@ -124,7 +124,8 @@ Set the new file content with:
         {"name": "firstname", "ines": "ines", "type": "text"},
         {"name": "lastname", "ines": "ines", "type": "text"},
         {"name": "email", "ines": "nes", "type": "text"},
-        {"name": "phone", "ines": "nes", "type": "text"}
+        {"name": "phone", "ines": "nes", "type": "text"},
+        {"name": "birthdate", "ines":"nes", "type": "date"}
     ]
 }
 ```
@@ -146,6 +147,116 @@ Enjoy !!
 
 ## Crud configuration file specifications
 
-The crud configuration file is readed each time the view is invoked with the browser.
-For each controller is needed the respective 
+The crud configuration file is readed each time the view is invoked with the browser (no need to restart sails if you want to modify the view content and layout).
+For each controller is needed the respective JSON crud configuration file, like in the example above, if for the contact controller we need ```ContactController.js``` for the Crud configuration file we need ```ContactCrudConfig.js```.
 
+The crud configuration file describes the view in each of the four situations: ```index```,```new```,```edit```,```show```.
+
+Also describes the fields layout, the available search fields and the title.
+
+An example follow to show the five first level elements for the configuration:
+
+```
+{
+    "prettyName"  : "<a human readable title for the view>",
+
+    "textSearchFields": [<array of text fields from the model for the search section>],
+
+    "facets": [<array of facets for the search section>],
+
+    "layout" : [<array of fieldsets, 
+    				each fieldset has a name and contains one or more rows, 
+    					each row contains one or more fields>],
+
+    "fieldsConfig": [<array of controls, each control has "name", "type" and "ines">]
+}
+```
+
+#### What is "ines" ?
+
+(i)ndex | (n)ew | (e)dit | (s)how = "ines".
+
+The "ines" property for a control visible only in the "show" view, is "s", while for a control always visible is "ines".
+
+Because the ```index``` view shows a list of records (aka objects) you may want to show only few fields (aka properties) in the list. 
+
+In the given contact example, the fields the user see in the list are ```firstname``` and ```lastname```.
+The ```email```,```phone```,```birthdate``` fields are not visible in the ```index``` view.
+
+#### textSearchFields
+
+This property of the Crud configuration file teach the controller (and to the view) wich fields of the model are searchable. For the above contact example, you can set this property as follows:
+
+```
+{
+    "prettyName"  : "Contact",
+    
+    "textSearchFields": ["firstname","lastname","email","phone"],
+
+    "fieldsConfig": [
+        {"name": "firstname", "ines": "ines", "type": "text"},
+        {"name": "lastname", "ines": "ines", "type": "text"},
+        {"name": "email", "ines": "nes", "type": "text"},
+        {"name": "phone", "ines": "nes", "type": "text"},
+        {"name": "birthdate", "ines":"nes", "type": "date"}
+    ]
+}
+```
+
+By default, without ```textSearchFields``` specifications, the controller searches in the fieldsConfig and automatically adds fields with matching conditions to the ```textSearchFields```.
+Matching conditions are:
+
+- a field with "name" = "name"
+- one or more fields with "inname" property set to ```true```
+
+The following example search only the ```firstname``` field.
+
+```
+{
+    "prettyName"  : "Contact",
+    
+    "fieldsConfig": [
+        {"name": "firstname", "ines": "ines", "type": "text", "inname":true},
+        {"name": "lastname", "ines": "ines", "type": "text"},
+        {"name": "email", "ines": "nes", "type": "text"},
+        {"name": "phone", "ines": "nes", "type": "text"},
+        {"name": "birthdate", "ines":"nes", "type": "date"}
+    ]
+}
+```
+
+#### facets
+
+Try this example:
+
+```
+{
+    "prettyName"  : "Contact",
+        
+    "facets": [
+        {"field": "department", "option": "department", "caption":"Department"}
+    ],
+    
+    "fieldsConfig": [
+        {"name": "firstname", "ines": "ines", "type": "text", "inname":true},
+        {"name": "lastname", "ines": "ines", "type": "text"},
+        {"name": "email", "ines": "nes", "type": "text"},
+        {"name": "phone", "ines": "nes", "type": "text"},
+        {"name": "birthdate", "ines":"nes", "type": "date"},
+        {
+        	"name": "department", 
+        	"ines":"ines", 
+        	"type":"buttongroup", 
+        	"options":["Admin","Development","Sales"]
+        }
+    ]
+}
+```
+
+Please note two new elements: the ```facet``` property and a new element in the ```fieldsConfig``` property, both referring to the new ```department``` field.
+
+The view will show a new dropdown menu in the search section (and a new buttongroup field-control). 
+
+The user can "select" the department for each contact while creating or editing the contact by clicking the respective button in the new button group named "department".
+
+The user can "filter" the index view using the dropdown and selecting one of the existing options. Options are populated directly from the present values in the ```department``` field for each row. For each option is visible a "count" of corresponding rows.

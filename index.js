@@ -79,7 +79,9 @@
 
   Date.prototype.formatDate = function(){
     var outputDateElements = [] ;
-    var locale = this.getCurrentLocale() ;
+    // todo: get the current locale
+    var locale = {} ;
+    locale.dateFormat = 'd/m/y' ;
     var dateFormatPositions = locale.dateFormat.split('/') ;
     for (var i=0;i<dateFormatPositions.length;i++){
       if (dateFormatPositions[i] == 'd'){
