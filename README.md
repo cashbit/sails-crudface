@@ -11,7 +11,9 @@ The user interface is plain and responsive HTML with [jQuery](http://jquery.com/
 
 The url schema is [REST](http://en.wikipedia.org/wiki/Representational_state_transfer) based, so we have the following possible default implementation for the API:
 
-```http://<host>:<port>/<controller>[/<operation>][/<id>]```
+```
+http://<host>:<port>/<controller>[/<operation>][/<id>]
+```
 
 Where ```host``` is the host name where sails is running at ```port``` and ```controller``` is the name of the controller/model where the data will be managed and stored.
 
