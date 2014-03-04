@@ -326,9 +326,9 @@ So ```firstname:6``` specifies that we want the width equal to 50% of the page.
 
 This means also that:
 
-- the minimum with for each control is 1
-- we can have at least 12 controls of with=1 for each row
-- the maximum with for each control is 12
+- the minimum width for each control is 1
+- we can have at least 12 controls of width=1 for each row
+- the maximum width for each control is 12
 - a good distribution of fields yeld always 12 as the sum of the width of each field in a row
 
 Try the above example opening the ```contact``` show view both in a desktop browser and in your mobile browser to see the responsive layout (or simply try to reduce the with of the browser window to a minimum 320px).
