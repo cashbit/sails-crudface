@@ -525,3 +525,37 @@ module.exports.normalize = function(req,res,next){
 };
 ```
 
+
+##### type: detail
+
+This kind, in the ```show``` view, permits to show a list of record related to the current record.
+In the example below: for each customer we can manage many contacts.
+The following code will be placed in the CustomerCrudConfig.js
+
+```
+		{"name": "contacts", "ines":"s", "type":"detail", "model":"contact", "key":"customer", "fields":[
+				{"name":"firstname","label":"First name"},
+				{"name":"lastname", "label":"Last name"}
+			],
+			"destroyMethod":"delete", "destroyEnabled":true,
+			"addEnabled": true,
+			"addPosition": "top",
+			"label":"Contacts"
+		}
+```
+and requires a relationship in the ContactCrudConfig.js
+
+```
+{
+	"name": "customer", 
+	"type": "select",
+	"ines": "nes", 
+	"relationship": {
+		"entity": "customer",
+		"inname": "name",
+		"filter":{}
+	}
+}
+```
+
+For the sake of completeness 
