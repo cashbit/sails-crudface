@@ -62,7 +62,7 @@ The layout is responsive, mobile first. It's based on the "[Bootstrap grid syste
 The components labels are localizeable using the standard i18n in sails, see ```config/locales/_README.md``` to understand how it works, but in short: for each component label, you can specify a localized version.
 
 
-## Install
+## [Install](id:install)
 First of all, you need an existing sails project ([see here if you want to create a new sailsjs project](http://sailsjs.org/#!getStarted)), **beware: use the --linker option creating the new project**).
 
 ```
@@ -478,6 +478,26 @@ The list is filtered with the ```filter``` expression, the drop-down list values
 
 This means that if the "customer" record/object has a field "name", the value of that field will appear in the drop-down list, but the value stored in the contact record is the id of the selected customer in the drop-down list.
 
+###### filter
+
+The filter can be described with an object like:
+
+```
+{
+  name: 'Steven',
+  age: 32,
+  phone:'(210)-555-1234'
+}
+
+```
+Equivalent to SQL expression:
+
+```
+SELECT * FROM customer WHERE name = 'Steven' AND age = 32 AND phone = '(210)-555-1234'
+```
+
+You can find more info [here](http://sailsjs.org/#!documentation/models) at "find" paragraph.
+
 ##### type: read-only-select
 
 This kind of control is used mainly to provide an hypertext link to the releated record in relationship->entity.
@@ -528,9 +548,9 @@ module.exports.normalize = function(req,res,next){
 
 ##### type: detail
 
-This kind, in the ```show``` view, permits to show a list of record related to the current record.
+This kind, in the ```show``` view, permits to show a list of records related to the current record.
 In the example below: for each customer we can manage many contacts.
-The following code will be placed in the CustomerCrudConfig.js
+The following code will be placed in the CustomerCrudConfig.js in the ```fieldsConfig``` section:
 
 ```
 		{"name": "contacts", "ines":"s", "type":"detail", "model":"contact", "key":"customer", "fields":[
@@ -543,6 +563,16 @@ The following code will be placed in the CustomerCrudConfig.js
 			"label":"Contacts"
 		}
 ```
+don't forget to add a reference to "contacts" in the ```layout``` section adding an element like this:
+
+```
+{
+	section: "", rows:[
+		{"contacts":12}
+	]
+}
+```
+
 and requires a relationship in the ContactCrudConfig.js
 
 ```
@@ -552,10 +582,31 @@ and requires a relationship in the ContactCrudConfig.js
 	"ines": "nes", 
 	"relationship": {
 		"entity": "customer",
-		"inname": "name",
+		"inname": "firstname",
 		"filter":{}
 	}
 }
 ```
 
-For the sake of completeness 
+To see the list of contact managed for a customer, you need to navigate to one of the customers.
+
+###### detail configuration
+
+The keys in detail configuration are:
+
+- ```destroyMethod```: can be "delete" or "detach"
+- ```destoryEnabled```: false to hide the "Delete/Detach" button for each record
+- ```addEnabled```: false to hide the "Add" button
+- ```addPosition```: can be "top" or "bottom" or "both"
+- ```label```: optional
+
+
+## Complete example
+
+In the ```example``` folder you can find a complete example you can use for a starting point.
+The example presents a Contact model/controller and a Customer model/controller, with a relationship contact->Customer and can be used for a starting point for a complete application.
+The example can work in a complete sails setup with all the [Installation](#install) steps completed.
+
+
+
+
