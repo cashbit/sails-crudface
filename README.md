@@ -553,7 +553,11 @@ In the example below: for each customer we can manage many contacts.
 The following code will be placed in the CustomerCrudConfig.js in the ```fieldsConfig``` section:
 
 ```
-		{"name": "contacts", "ines":"s", "type":"detail", "model":"contact", "key":"customer", "fields":[
+		{"name": "contacts", 
+			"ines":"s", 
+			"type":"detail", 
+			"model":"contact", 
+			"key":"customer", "fields":[
 				{"name":"firstname","label":"First name"},
 				{"name":"lastname", "label":"Last name"}
 			],
@@ -607,6 +611,93 @@ In the ```example``` folder you can find a complete example you can use for a st
 The example presents a Contact model/controller and a Customer model/controller, with a relationship contact->Customer and can be used for a starting point for a complete application.
 The example can work in a complete sails setup with all the [Installation](#install) steps completed.
 
+## Addendum
+
+### Sorting
+
+Default sorting is defined automatically on fields with ```"inname":true```.
+Otherwise you can set ```fieldSort``` like following:
+
+```
+"fieldSort":{
+	"lastname":1,
+	"firstname":1
+},
+```
+
+See [waterline docs](https://github.com/balderdashy/waterline-docs/blob/master/query-language.md) for more.
+
+Example, sorting contacts by lastname,firstname and finally by birthdate (descending) :
 
 
+```
+{
+    "prettyName"  : "Contact",
+        
+    "facets": [
+        {"field": "department", "option": "department", "caption":"Department"}
+    ],
+    
+	"layout" : [
+        {
+          "section": "", "rows": [
+            {"firstname":6, "lastname":6}
+          ]
+        },
+        {
+            "section":"Details","rows":[
+                {"email":8, "phone":4},
+                {"birthdate":4,"department":8}
+            ]
+        }
+    ],
+       
+    "fieldSort":{
+		"lastname":1,
+		"firstname":1,
+		"birthdate":0
+	}, 
+	
+    "fieldsConfig": [
+        {"name": "firstname", "ines": "ines", "type": "text", "inname":true},
+        {"name": "lastname", "ines": "ines", "type": "text"},
+        {"name": "email", "ines": "nes", "type": "text"},
+        {"name": "phone", "ines": "nes", "type": "text"},
+        {"name": "birthdate", "ines":"nes", "type": "date"},
+        {
+        	"name": "department", 
+        	"ines":"ines", 
+        	"type":"buttongroup", 
+        	"options":["Admin","Development","Sales"]
+        }
+    ]
+}
+```
 
+Please note: the ```fieldSort``` property can be used in the field type ```detail``` too.
+
+
+### Distinct
+
+Sometimes you need to display only distinct records, based on a comparison field.
+You can set ```distinctFieldName``` with the name of the comparison field.
+For example, ```id```.
+
+
+## Runtime javascript API
+
+If you need to run some javascript code when the page is loaded for a certain view, you can add a ```script``` tag in the EJS file.
+Example follow for the ```show``` view:
+
+```
+<% include ../_crud/show.ejs %>
+
+< script>
+	_crud_documentReady = function(){
+
+	// your code here will be called on load (see _crud.js for more)
+
+	}
+</script>
+
+```

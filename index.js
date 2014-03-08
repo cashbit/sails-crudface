@@ -645,7 +645,17 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
 
     makeFilter();
 
-    sails.models[name].find(filter).exec(function(err, foundRecords) {
+    if (!controller.exports.fieldSort){
+      controller.exports.fieldSort = {} ;
+      for (var i=0;i<controller.exports.fieldsConfig.length;i++){
+        var field = controller.exports.fieldsConfig[i] ;
+        if (field.inname){
+          controller.exports.fieldSort[field.name] = 'asc' ;
+        }
+      }
+    }
+
+    sails.models[name].find(filter).sort(controller.exports.fieldSort).exec(function(err, foundRecords) {
       if (err) return next(err);
       var viewConfig = {
         fields: controller.exports.fieldsConfig,
@@ -794,7 +804,18 @@ module.exports.readView = function(req,res,next,controller,callback){
           }) ;
         }
       }
-      sails.models[detailConfig.model].find(filter,function(err,foundRecords){
+
+      if (!detailConfig.fieldSort){
+        detailConfig.fieldSort = {} ;
+        for (var i=0;i<detailConfig.fields.length;i++){
+          var field = detailConfig.fields[i] ;
+          if (field.inname){
+            controller.exports.fieldSort[field.name] = 'asc' ;
+          }
+        }
+      }
+
+      sails.models[detailConfig.model].find(filter).sort(detailConfig.fieldSort).exec(function(err,foundRecords){
         detailConfig.records = foundRecords ;
         if (err) return callback(err) ;
         if (foundRecords.length === 0) return callback() ;

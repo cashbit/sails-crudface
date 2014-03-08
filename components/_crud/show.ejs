@@ -20,7 +20,12 @@
 	<script>var crudTitle = '<%= record.name ? record.name : prettyName %>'</script>
 	<% _.each(fieldlayout, function(section) { sectionCount++%> 
 		<% var hidden = section.config.hidden ? "hidden" : "" ; %>
-		<% if (section.section) { %><h4><%= section.section %></h4><% } %>
+		<% if (section.section) { %>
+		<div class="row">
+			<div class="col-md-11"><h4><%= section.section %></h4></div>
+			<div class="col-md-1"><button onclick="_crud.sectionToggle(<%= sectionCount %>)" class="btn btn-sm pull-right" value="Open"><span id="sectionBtn_<%= sectionCount %>" class="glyphicon glyphicon-eye-open"></span></button></div>
+		</div>
+		<% } %>
 			<% if (section.section) { %>
 			<div id="section_<%= sectionCount %>" class="well <%= hidden %>">
 			<% } %>
