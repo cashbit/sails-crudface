@@ -1,7 +1,7 @@
 sails-crudface
 ==============
 
-**A sails node module for "systematic" scrud interface generation with MVC architecture.**
+**A [sails](https://github.com/balderdashy/sails) node module for "systematic" scrud interface generation with MVC architecture.**
 
 If you want sails generate views on the fly for your models, you can use this module and create a configuration file describing the fields and the layout you need for every controller/model.
 
@@ -11,6 +11,8 @@ Also, writing the code for the view part of the MVC architecture is a repetitive
 sails-crudface automates the task of creating the user interface for search and entry of data.
 
 The resulting user interface is plain and responsive HTML with [jQuery](http://jquery.com/download/) and [Bootstrap](http://getbootstrap.com/getting-started/#download)
+
+Sails it's an MVC realtime framework for web application development, please visit the [official site](http://sailsjs.org/) to know more.
 
 #### REST Approach
 
@@ -140,7 +142,7 @@ Set the new file content with:
 #### 4. Create the contact view folder
 
 In order to display the user interface the module needs a view folder with the same name of the model.
-So copy the ```_crudtemplate``` folder in the ```contact```.
+So copy the ```_crudtemplate``` folder in the ```contact``` in the ```view``` folder of your project.
 
 #### 5. Run your sails project
 
