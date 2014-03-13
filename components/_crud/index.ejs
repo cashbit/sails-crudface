@@ -8,6 +8,9 @@
 			<h3 class="pull-right">
 				<a class="btn btm-sm btn-info" href="/<%= controller %>/new">Add</a>
 			</h3>
+			<h3 class="pull-right">
+				<a class="btn btm-sm btn-info" href="/<%= controller %>/csvexport">CSV</a>
+			</h3>
 		</div>
 	</div>
 
@@ -87,9 +90,10 @@
 			<% var mode = "i" ; %>
 			<% _.each(fields, function(field) { %> 
 				<% if (field.ines.indexOf(mode) > -1) { %>
-					<td><%= record[field.name] ? record[field.name].crudRender() : "" %></td>
+					<td class="<%= field.class ? field.class : '' %>"><%= record[field.name] ? record[field.name].crudRender() : "" %></td>
 				<% } %>
 			<% }) %>	
+			
 			
 			<td><a href="../<%= controller %>/show/<%= record.id %>" class="btn btn-sm btn-primary">Show</a></td>
 			<td><a href="../<%= controller %>/edit/<%= record.id %>" class="btn btn-sm btn-warning">Edit</a></td>

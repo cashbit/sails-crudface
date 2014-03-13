@@ -184,7 +184,22 @@ module.exports.init = function(controller,fromPath){
       });
     },
 
-
+    csvexport: function(req,res,next){
+      module.exports.searchView(req,res,next,controller,{},function(viewConfig){
+        var fieldlist = [] ;
+        for (var i=0;i<viewConfig.fields.length;i++){
+          var field = viewConfig.fields[i] ;
+          if (field.ines.indexOf('i')>-1) fieldlist.push(field.name) ;
+        }
+        var fieldSeparator = 's' ;
+        if (req.param('CSV') == 'c' || req.param('CSV') == 's'|| req.param('CSV') == 't'){
+          fieldSeparator = req.param('CSV') ;
+        }
+        res.header('Content-type','text/csv');
+        res.header('Content-disposition','attachment;filename=' + controller.exports.globalId  + '.csv');
+        res.send(module.exports.exportCSV(viewConfig.records,fieldSeparator,fieldlist)) ;
+      });
+    }
   } ;
 } ;
 
@@ -661,7 +676,8 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
         fields: controller.exports.fieldsConfig,
         controller: name,
         prettyName: controller.exports.prettyName,
-        records : foundRecords
+        records : foundRecords,
+        footerFieldsConfig : controller.exports.footerFieldsConfig
       } ;
 
       freeTextSearch(viewConfig) ;
@@ -673,6 +689,29 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
         var field = viewConfig.fields[i] ;
         if (field.relationship){
           relationships.push(field) ;
+        }
+      }
+
+
+      function calculateFooter(record,viewConfig){
+        
+        if (!viewConfig.footerFieldsConfig) return ;
+
+        for (var f=0;f<viewConfig.footerFieldsConfig.length;f++){
+          var footerFieldConfig = viewConfig.footerFieldsConfig[f] ;
+          footerFieldConfig.count = footerFieldConfig.count ? footerFieldConfig.count : 0 ;
+          var value = record[footerFieldConfig.name] ;
+          if (!value) value = 0;
+          if (footerFieldConfig.value === undefined) footerFieldConfig.value = 0 ;
+          if (footerFieldConfig.func === 'sum') footerFieldConfig.value += record[footerFieldConfig.name] ;
+          
+          if (footerFieldConfig.func === 'count'){
+            footerFieldConfig.value++ ;
+          }
+          if (footerFieldConfig.func === 'average'){
+            footerFieldConfig.value = (footerFieldConfig.value * footerFieldConfig.count + value) / (footerFieldConfig.count+1) ;
+          }
+          footerFieldConfig.count++ ;
         }
       }
 
@@ -698,6 +737,8 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
           });
         }
         
+        calculateFooter(record,viewConfig) ;
+
         async.each(relationships,populateThisRelationshipOnRecord,function(err){
           populateCallBack() ;
         });

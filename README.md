@@ -358,6 +358,16 @@ An optional property is ```label```, so you can decide a decent label for each c
 
 As mentioned above, the ```label``` property will be localized according to the ```config/locales/``` settings.
 
+Another optional property is ```class``` used in the ```index``` view for the ```<td>``` element displaying the value of the field.
+For example:
+
+```
+{"name": "amount", "ines": "ines", "type": "text", "class":"text-right"}
+
+```
+Will align right the value.
+
+
 #### The "type" property
 
 This property define the kind of control will be displayed. Valid types are:

@@ -6,7 +6,7 @@
 		<div class="col-md-12">
 			<h3 class="pull-left"><%= prettyName %></h3>
 			<h3 class="pull-right">
-				<a class="btn btm-sm btn-info" href="/<%= controller %>/new">Add</a>
+				<a class="btn btm-sm btn-info" href="/<%= controller %>/csvexport">CSV</a>
 			</h3>
 		</div>
 	</div>
@@ -171,6 +171,7 @@
 			
 
 			<% _.each(sortedRecords, function(record) { 
+
 				var buttonHref = "/" + compareConfig.modelName + "/show/" + record[compareConfig.objectIdFieldName]
 				var buttonClassName = "info" ;
 				if (compareConfig.rankingFieldName){
@@ -184,7 +185,7 @@
 			%>
 			<tr class="<%= buttonClassName  %> compare_<%= buttonClassName %> compareBtn" data-id="<%= record[compareConfig.objectIdFieldName] %>" data-model="record">
 				<% _.each(compareConfig.summaryFields, function(field) { %> 
-					<td><%= record[field.name] %></td>
+					<td class="<%= field.class ? field.class : '' %>"><%= record[field.name] ? record[field.name].crudRender() : "" %></td>
 				<% }) %>	
 				
 				<td><a href="<%= buttonHref %>" class="btn btn-sm btn-primary">Show</a></td>
@@ -192,6 +193,18 @@
 			</tr> 
 
 			<% }) %>
+
+			<tr>
+				<% _.each(compareConfig.summaryFields, function(field) { 
+					var value = "" ;
+					_.each(footerFieldsConfig, function(footerField) {
+						if (footerField.name === field.name){
+							value = footerField.value ;
+						}
+					}) ; %> 
+					<td class="<%= field.class ? field.class : '' %>"><%= value.crudRender() %></td>	
+				<% }) %>
+			</tr>
 		</table>	  	
 	  </div>
 	</div>

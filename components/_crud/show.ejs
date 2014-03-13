@@ -79,11 +79,19 @@
 								
 							<% } %>
 
-							<% if (field.type == 'textarea') { %>
+							<% if (field.type == '__textarea') { %>
 								<fieldset disabled>
 									<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
 									<textarea class="form-control" name="<%= field.name %>"><%= record[field.name] ? record[field.name] : "" %></textarea>
 								</fieldset>
+							<% } %>
+
+							
+							<% if (field.type == 'textarea') { %>
+								<div>
+									<p style="font-weight:bold" for="<%= field.name %>"><%= field.label ? field.label : field.name %></p>
+									<p ><%= record[field.name] ? record[field.name] : "" %></p>
+								</div>
 							<% } %>
 
 
