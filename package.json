@@ -1,6 +1,6 @@
 {
     "name": "sails-crudface",
-    "version": "0.1.0",
+    "version": "0.1.2",
     "description": "A sailsjs node module for \"systematic\" scrud interface generation",
     "dependencies": {
         "sails": "latest"

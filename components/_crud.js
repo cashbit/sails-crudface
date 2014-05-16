@@ -53,6 +53,9 @@ var _crud = {
 	},
 
 	ShowHiddenSelects: function(){
+		$('.sls-crudface-select-add').on('show.bfhselectbox', function() {
+			_crud.optionRefresh(this) ;
+		}) ;
 		$('.bfh-selectbox').removeClass('hidden') ;
 	},
 
@@ -60,6 +63,16 @@ var _crud = {
 		if (typeof(crudTitle) !== 'undefined'){
 			document.title = crudTitle ;
 		}
+	},
+
+	optionRefresh: function(selectToRefresh){
+		var entity = $(selectToRefresh).attr('data-entity') ;
+		$.get( '/'+entity+'/findforselect', function( data ) {
+			var selectOptions = $('.bfh-selectbox[data-name="' + entity + '"] .bfh-selectbox-options > div > ul').empty();
+			for (var i=0;i<data.length;i++){
+				selectOptions.append('<li><a tabindex="-1" href="#" data-option="'+ data[i].id + '">'+ data[i].value +'</a></li>') ;
+			}
+		});
 	}
 };
 
@@ -67,6 +80,9 @@ $(document).ready(function(){
 	_crud.ScanForButtonGroups() ;
 	_crud.ShowHiddenSelects();
 	_crud.SetTitle();
-	if (_crud_documentReady) _crud_documentReady();
+
+
+
+	if (typeof(_crud_documentReady) === 'function') _crud_documentReady();
 });
 

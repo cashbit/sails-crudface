@@ -139,9 +139,18 @@ module.exports.init = function(controller,fromPath){
 
   return {
     index : function(req,res,next){
-      module.exports.searchView(req,res,next,controller,{},function(viewConfig){
-        res.view(viewConfig);
-      });
+      if (controller.exports.getFilter){
+        controller.exports.getFilter(req,res,function(err,filter){
+          if (err) return next(err) ;
+          module.exports.searchView(req,res,next,controller,filter,function(viewConfig){
+            res.view(viewConfig);
+          });
+        }) ;
+      } else {
+        module.exports.searchView(req,res,next,controller,{},function(viewConfig){
+          res.view(viewConfig);
+        });
+      }
     },
 
     'new' : function(req,res,next){
@@ -199,6 +208,32 @@ module.exports.init = function(controller,fromPath){
         res.header('Content-disposition','attachment;filename=' + controller.exports.globalId  + '.csv');
         res.send(module.exports.exportCSV(viewConfig.records,fieldSeparator,fieldlist)) ;
       });
+    },
+
+    findForSelect: function(req,res,next){
+      module.exports.searchView(req,res,next,controller,{},function(viewConfig){
+        var inNameFields = [] ;
+        for (var f=0;f<viewConfig.fields.lenght;f++){
+          var field = viewConfig.fields[f] ;
+          if (field.inname) inNameFields.push(field.name) ;
+        }
+        if (inNameFields.length === 0) inNameFields.push('name') ;
+        var output = [] ;
+        for (var i=0;i<viewConfig.records.length;i++){
+          var inNameValues = [] ;
+          var record = viewConfig.records[i] ;
+          for (var ff=0;ff<inNameFields.length;ff++){
+            inNameValues.push(record[inNameFields[ff]]) ;
+          }
+          var inName = inNameValues.join(' ') ;
+          var outRec = {
+            id: record.id,
+            value: inName
+          } ;
+          output.push(outRec) ;
+        }
+        res.send(output) ;
+      }) ;
     }
   } ;
 } ;
@@ -250,6 +285,17 @@ module.exports.loadConfig = function(controller){
   }
 };
 
+
+module.exports.findFieldInConfigByName = function(fieldName,controller){
+  for (var f=0;f<controller.exports.fieldsConfig.length;f++){
+    var field = controller.exports.fieldsConfig[f] ;
+    if (field.name === fieldName){
+      return field ;
+    }
+  }
+  return ;
+};
+
 module.exports.autoLayout = function(controller,viewType){
   /*
 
@@ -289,6 +335,16 @@ module.exports.autoLayout = function(controller,viewType){
       var row = rows[r] ;
       var newRow = {} ;
       var fieldCount = 0 ;
+      for (var fieldName in row){
+        var afield = module.exports.findFieldInConfigByName(fieldName,controller) ;
+        if (afield){
+          if (afield.ines.indexOf(viewType) > -1){
+              newRow[afield.name] = row[fieldName] ;
+              fieldCount++ ;
+          }
+        }
+      }
+      /*
       for (var f=0;f<controller.exports.fieldsConfig.length;f++){
         var field = controller.exports.fieldsConfig[f] ;
         if (row[field.name]){
@@ -298,6 +354,7 @@ module.exports.autoLayout = function(controller,viewType){
           }
         }
       }
+      */
       if (fieldCount){
         newRows.push(newRow) ;
       }
@@ -316,7 +373,7 @@ module.exports.createView = function(req,res,next,controller,callback){
 
   var layout = module.exports.autoLayout(controller,"n") ;
   var returnUrl = req.param('returnUrl') ;
-  var name = controller.exports.identity ;
+  var name = controller.exports.customIdentity || controller.exports.identity ;
   var fields = controller.exports.fieldsConfig ;
 
   var newObj = {} ;
@@ -328,7 +385,7 @@ module.exports.createView = function(req,res,next,controller,callback){
   var viewConfig = {
         fields: fields,
         fieldlayout: layout,
-        controller: name,
+        controller: controller.exports.identity,
         prettyName: controller.exports.prettyName,
         record : newObj,
         returnUrl: returnUrl
@@ -366,7 +423,7 @@ module.exports.AddRelatedRecords = function(fields,req,next){
   selectAddFields = [] ;
   for (var i=0;i<fields.length;i++){
     field = fields[i] ;
-    if (field.type == "select-add"){
+    if (field.type == 'select-add'){
       selectAddFields.push(field);
     }
   }
@@ -386,7 +443,7 @@ module.exports.AddRelatedRecords = function(fields,req,next){
 
 module.exports.createAction = function(req,res,next,controller){
   this.loadConfig(controller) ;
-  var name = controller.exports.identity ;
+  var name = controller.exports.customIdentity || controller.exports.identity ;
   var fields = controller.exports.fieldsConfig ;
   this.AddRelatedRecords(fields,req,function(err,addedObjectIds){
       
@@ -445,21 +502,38 @@ module.exports.createAction = function(req,res,next,controller){
       for (var fieldNameInAddedObjectIds in addedObjectIds){
         newObj[fieldNameInAddedObjectIds] = addedObjectIds[fieldNameInAddedObjectIds] ;
       }
-      
-      sails.models[name].create(newObj, function (err, newCreatedObj) {
-          if (err) {
-            console.log(err);
-            req.session.flash = {
-              err: err
-            };
-            if (returnUrl != "undefined") return res.redirect(returnUrl) ;
-            return res.redirect('/'+ name + '/new/');
-          } else {
-            sails.models[name].publishCreate(newCreatedObj.toJSON());
-            if (returnUrl != "undefined") return res.redirect(returnUrl) ;
-            res.redirect('/'+ name + '/show/' + newCreatedObj.id);
+      async.series(
+        [
+          function (cb){
+            if (controller.exports.beforeCreate){
+              controller.exports.beforeCreate(req,res,newObj,function(err){
+                cb(err) ;
+              }) ;
+            } else {
+              cb() ;
+            }
           }
-      });
+        ],
+        function(err){
+          if (err) return next(err) ;
+          sails.models[name].create(newObj, function (err, newCreatedObj) {
+              if (err) {
+                console.log(err);
+                req.session.flash = {
+                  err: err
+                };
+                if (returnUrl != 'undefined') return res.redirect(returnUrl) ;
+                return res.redirect('/'+ controller.exports.identity + '/new/');
+              } else {
+                sails.models[name].publishCreate(newCreatedObj.toJSON());
+                if (returnUrl != 'undefined') return res.redirect(returnUrl) ;
+                res.redirect('/'+ controller.exports.identity + '/show/' + newCreatedObj.id);
+              }
+          });
+        }
+
+
+      ) ;
   }) ;
 },
 
@@ -523,8 +597,8 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
           if (fielddefined){
             if (!filter.where) filter['where'] = {} ;
             var attribute = false ;
-            if (sails.models[controller.exports.identity]._attributes){
-                attribute = sails.models[controller.exports.identity]._attributes[field] ;
+            if (sails.models[controller.exports.customIdentity || controller.exports.identity]._attributes){
+                attribute = sails.models[controller.exports.customIdentity || controller.exports.identity]._attributes[field] ;
             } 
             var isString = false ;
             var isBoolean = false ;
@@ -605,7 +679,7 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
         var offset = (viewlimit*(viewpage -1)) ;
         var limitRecords = [] ;
         for (var i=offset;i<(viewlimit + offset);i++){
-          limitRecords.push(viewConfig.records[i]) ;
+          limitRecords.push(viewConfig.records[i] ) ;
         }
         viewConfig.records = limitRecords ;
       }
@@ -655,7 +729,7 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
       viewConfig.records = outputrecords ;
     }
 
-    var name = controller.exports.identity ;
+    var name = controller.exports.customIdentity || controller.exports.identity ;
     //module.exports.addUrlToBreadCrumbs(req, "List of " + name, "/" + name) ;
 
     makeFilter();
@@ -674,7 +748,7 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
       if (err) return next(err);
       var viewConfig = {
         fields: controller.exports.fieldsConfig,
-        controller: name,
+        controller: controller.exports.identity,
         prettyName: controller.exports.prettyName,
         records : foundRecords,
         footerFieldsConfig : controller.exports.footerFieldsConfig
@@ -744,13 +818,38 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
         });
       }
 
-      async.each(foundRecords,populateRelationshipsOnRecord,function(err){
-        populateCompare(viewConfig);
-        populateFacets(viewConfig);
-        removeDuplicateIds(viewConfig);
-        cutRecordToViewLimit(viewConfig) ;
-        callback(viewConfig);
-      });
+      async.each(
+        foundRecords,
+        populateRelationshipsOnRecord,
+        function(err){
+          populateCompare(viewConfig);
+          populateFacets(viewConfig);
+          removeDuplicateIds(viewConfig);
+          cutRecordToViewLimit(viewConfig) ;
+          if (controller.exports.beforeIndex){
+            async.each(
+              viewConfig.records,
+              function(record,cb){
+                record._crudConfig = {
+                  canShow : true,
+                  canEdit : true,
+                  canDelete : true
+                }
+                controller.exports.beforeIndex(record,cb) ;
+              },
+              function(err){
+                if (err) {
+                  console.log("Error, beforeView") ;
+                  console.log(err) ;
+                }
+                callback(viewConfig);
+              }
+            );
+          } else {
+            callback(viewConfig) ;
+          }    
+        }
+      );
 
     });
 },
@@ -761,7 +860,7 @@ module.exports.readView = function(req,res,next,controller,callback){
 
   var layout = module.exports.autoLayout(controller,"s") ;
 
-  var name = controller.exports.identity ;
+  var name = controller.exports.customIdentity || controller.exports.identity ;
 
   sails.models[name].findOne(req.param('id'),function(err,foundRecord){
     if (err) next(err) ;
@@ -772,8 +871,10 @@ module.exports.readView = function(req,res,next,controller,callback){
     var viewConfig = {
         fields: controller.exports.fieldsConfig,
         fieldlayout: layout,
-        controller: name,
+        controller: controller.exports.identity,
         prettyName: controller.exports.prettyName,
+        showAttachments : controller.exports.showAttachments | false,
+        attachmemtIsPublic : controller.exports.attachmemtIsPublic | true,
         record : foundRecord
     } ;
 
@@ -832,7 +933,7 @@ module.exports.readView = function(req,res,next,controller,callback){
 
       
 
-      var filter = {} ;
+      var filter = detailConfig.filter || {} ;
       filter[detailConfig.key] = foundRecord.id ;
       var relationships = [] ;
       var attributes = sails.models[detailConfig.model]._attributes ;
@@ -918,13 +1019,13 @@ module.exports.updateView = function(req,res,next,controller,callback){
 
   var layout = module.exports.autoLayout(controller,"e") ;
   var returnUrl = req.param('returnUrl') ;
-  var name = controller.exports.identity ;
+  var name = controller.exports.customIdentity || controller.exports.identity ;
   sails.models[name].findOne(req.param('id'),function(err,foundRecord){
     if (err) next(err) ;
     var viewConfig = {
           fields: controller.exports.fieldsConfig,
           fieldlayout: layout,
-          controller: name,
+          controller: controller.exports.identity,
           prettyName: controller.exports.prettyName,
           record : foundRecord,
           returnUrl: returnUrl
@@ -953,7 +1054,7 @@ module.exports.updateAction = function(req,res,next,controller){
 
   this.loadConfig(controller) ;
   var returnUrl = req.param('returnUrl') ;
-  var name = controller.exports.identity ;
+  var name = controller.exports.customIdentity || controller.exports.identity ;
   var fields = controller.exports.fieldsConfig ;
   var updateObj = {id:req.param('id')} ;
   for (var i=0;i<fields.length;i++){
@@ -994,11 +1095,11 @@ module.exports.updateAction = function(req,res,next,controller){
         err: err
       };
       if (returnUrl != "undefined") return res.redirect(returnUrl) ;
-      res.redirect('/'+ name + '/show/' + req.param('id'));
+      res.redirect('/'+ controller.exports.identity + '/show/' + req.param('id'));
     } else {
       sails.models[name].publishUpdate(req.param('id'),updatedObjs[0].toJSON());
       if (returnUrl != "undefined") return res.redirect(returnUrl) ;
-      res.redirect('/'+ name + '/show/' + req.param('id'));
+      res.redirect('/'+ controller.exports.identity + '/show/' + req.param('id'));
     }
   });
 },
@@ -1021,7 +1122,7 @@ module.exports.destroyAction = function(req,res,next,controller){
       res.redirect(req.param('returnUrl')) ;
     });
   } else {
-    name = controller.exports.identity ;
+    name = controller.exports.customIdentity || controller.exports.identity ;
     module.exports.removeUrlFromBreadCrumbs(req, "/" + name + "/show/" + req.param('id')) ;
     sails.models[name].findOne(req.param('id'), function (err, objectToDelete) {
         if (err) return next(err);
@@ -1047,7 +1148,7 @@ module.exports.destroyAction = function(req,res,next,controller){
             sails.models[name].publishDestroy(req.param('id'));
         });
         if (returnUrl !== undefined) return res.redirect(returnUrl) ;
-        res.redirect('/' + name);
+        res.redirect('/' + controller.exports.identity);
     });
   }
 
@@ -1055,7 +1156,7 @@ module.exports.destroyAction = function(req,res,next,controller){
 },
 
 module.exports.subscribe = function(req, res, controller) {
-  var name = controller.exports.identity ;
+  var name = controller.exports.customIdentity || controller.exports.identity ;
   sails.models[name].find(function (err, objects) {
     if (err) return next(err);
     sails.models[name].subscribe(req.socket);
@@ -1135,23 +1236,24 @@ module.exports.exportCSV = function(data,fieldSeparator,fieldList){
           fields.push(field) ;
         }        
       }
+      output.push(outputrow.join(fieldSeparator)) ;
+      outputrow = [] ;
+    }
 
-    } else {
-      for (var f=0;f<fields.length;f++){
-        var fieldName = fields[f];
-        var fieldValue = row[fieldName] ;
-        if (typeof(fieldValue) == 'string'){
-          if (fieldValue.indexOf(fieldSeparator) > -1) fieldValue = '"' + fieldValue + '"' ;
-          if (fieldValue.indexOf(rowSeparator) > -1) fieldValue = fieldValue.replace(rowSeparator,"\\"+rowSeparator) ;
-        }
-        if (typeof(fieldValue) == 'number') {
-          if (Math.round(fieldValue) != fieldValue){
-            fieldValue = fieldValue.formatNumber() ;
-          }
-          
-        }
-        outputrow.push(fieldValue) ;
+    for (var f=0;f<fields.length;f++){
+      var fieldName = fields[f];
+      var fieldValue = row[fieldName] ;
+      if (typeof(fieldValue) == 'string'){
+        if (fieldValue.indexOf(fieldSeparator) > -1) fieldValue = '"' + fieldValue + '"' ;
+        if (fieldValue.indexOf(rowSeparator) > -1) fieldValue = fieldValue.replace(rowSeparator,"\\"+rowSeparator) ;
       }
+      if (typeof(fieldValue) == 'number') {
+        if (Math.round(fieldValue) != fieldValue){
+          fieldValue = fieldValue.formatNumber() ;
+        }
+        
+      }
+      outputrow.push(fieldValue) ;
     }
     output.push(outputrow.join(fieldSeparator)) ;
   }

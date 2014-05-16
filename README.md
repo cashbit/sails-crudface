@@ -379,6 +379,7 @@ This property define the kind of control will be displayed. Valid types are:
 - ```textarea```: to display and edit text on more than one line
 - ```checkbox```: to display and edit booleans
 - ```select```: to display and select values from a list (with or without relationship/association)
+- ```select-add```: to display and select values from a list (with or without relationship/association) with an "add" button
 - ```read-only-select```: as above, but to display only
 - ```buttongroup```: same as ```select```, but for small amount of options
 - ```button```: can call a custom action in the underlying controller
@@ -390,6 +391,12 @@ This property define the kind of control will be displayed. Valid types are:
 
 ```
 {"name": "firstname", "ines": "ines", "type": "text", "label":"First name"}
+```
+
+Specify a placeholder property if needed (placeholder attribute for boostrap form control).
+
+```
+{"name": "firstname", "ines": "ines", "type": "text", "label":"First name", "placeholder":"Type here you firstname"}
 ```
 
 ##### type: read-only-text
@@ -510,6 +517,13 @@ SELECT * FROM customer WHERE name = 'Steven' AND age = 32 AND phone = '(210)-555
 
 You can find more info [here](http://sailsjs.org/#!documentation/models) at "find" paragraph.
 
+##### type: add-select
+
+This is like the ```select``` type except it presents an "Add" button.
+Clicking the Add button it opens a new browser window to create a new record.
+The created new record will be available in the select drop-down menu (ajax update).
+This is the useful kind of field when the user needs to add a new related record on the fly.
+
 ##### type: read-only-select
 
 This kind of control is used mainly to provide an hypertext link to the releated record in relationship->entity.
@@ -569,10 +583,12 @@ The following code will be placed in the CustomerCrudConfig.js in the ```fieldsC
 			"ines":"s", 
 			"type":"detail", 
 			"model":"contact", 
-			"key":"customer", "fields":[
+			"key":"customer", 
+			"fields":[
 				{"name":"firstname","label":"First name"},
 				{"name":"lastname", "label":"Last name"}
 			],
+			"filter": {},
 			"destroyMethod":"delete", "destroyEnabled":true,
 			"addEnabled": true,
 			"addPosition": "top",
@@ -624,6 +640,19 @@ The example presents a Contact model/controller and a Customer model/controller,
 The example can work in a complete sails setup with all the [Installation](#install) steps completed.
 
 ## Addendum
+
+### Attachments
+
+In the ```show``` view is possible to have a drop zone where the user can drop files as attachments to the actual record.
+
+Add this two settings to the CrudConfig file:
+
+```
+"showAttachments" : true,
+"attachmentIsPublic": true
+```
+If ```attachmentIsPublic``` all the attachments for that record will be visible for all users, otherwise will be visible only for the same user that uploaded the file.
+
 
 ### Sorting
 
@@ -695,6 +724,51 @@ Sometimes you need to display only distinct records, based on a comparison field
 You can set ```distinctFieldName``` with the name of the comparison field.
 For example, ```id```.
 
+## Controller API
+
+### customIdentity
+
+In the controller you can specify ```module.exports.customIdentity``` if you want to name the controller ```person``` but use the ```user``` model:
+
+```
+module.exports.customIdentity = "user";
+```
+### getFilter
+
+If specified in the controller, this function is called before searching for records/object in the ```index``` view.
+Example:
+
+```
+module.exports.getFilter = function(req,res,cb){
+	cb(null,{group:"b2b"}) ;
+};
+```
+The record presented in the ```index``` view will have "group === 'b2b'".
+If you want to return an error use the first parameter in the callback function as in the nodejs standard.
+
+### beforeCreate
+
+If specified in the controller, this function is called before saving the new object in memory.
+
+```
+module.exports.beforeCreate = function(req,res,newObj,cb){
+	newObj.group = "b2b" ;
+	cb() ;
+} ;
+```
+
+### beforeIndex
+If specified in the controller, this function is called for each record will be listed in the ```index``` view.
+You can modify the record and then call cb([err]).
+
+```
+module.exports.beforeView = function(record,cb){
+	record._crudConfig.canShow = false ;
+	record._crudConfig.canDelete = false ;
+	record._crudConfig.canEdit = false ;
+	record._crudConfig.gotoUrl = '/proposal/show/'+record.id
+} ;
+
 
 ## Runtime javascript API
 
@@ -713,3 +787,5 @@ Example follow for the ```show``` view:
 </script>
 
 ```
+
+

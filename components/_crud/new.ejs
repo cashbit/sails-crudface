@@ -18,13 +18,13 @@
 
 							<% if (field.type == 'text' || field.type == 'link') { %>
 								<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
-								<input type="text" class="form-control " placeholder="<%= field.label ? field.label : field.name %>" name="<%= field.name %>" value="<%= record[field.name] ? record[field.name] : "" %>"/>
+								<input type="text" class="form-control " placeholder="<%= field.placeholder || field.label || field.name %>" name="<%= field.name %>" value="<%= record[field.name] ? record[field.name] : "" %>"/>
 							<% } %>
 
 							<% if (field.type == 'read-only-text') { %>
 								<fieldset disabled>
 									<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
-									<input type="text" class="form-control " placeholder="<%= field.label ? field.label : field.name %>" name="<%= field.name %>" value="<%= record[field.name] != "undefined" ? record[field.name] : "" %>"/>
+									<input type="text" class="form-control " placeholder="<%= field.placeholder || field.label || field.name %>" name="<%= field.name %>" value="<%= record[field.name] ? record[field.name] : "" %>"/>
 								</fieldset>
 							<% } %>
 
@@ -46,7 +46,18 @@
 
 							<% if (field.type == 'select') { %>
 								<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
-								<div class="bfh-selectbox hidden" data-name="<%= field.name %>" data-value="<%= record[field.name] ? record[field.name] : "" %>" data-filter="true">
+								<div class="bfh-selectbox hidden" data-name="<%= field.name %>" data-entity="<%= field.relationship.entity %>" data-value="<%= record[field.name] ? record[field.name] : "" %>" data-filter="true">
+									<div class="bfh-selectbox-option" data-value=""></div>
+									<% _.each(field.options, function(option) { %>
+										<div class="bfh-selectbox-option" data-value="<%= option.id ? option.id : option %>"><%= option.id ? option.text : option %></div>
+									<% }) %>
+								</div>
+							<% } %>
+
+							<% if (field.type == 'add-select') { %>
+								<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
+								<a class="btn btn-xs btn-info pull-right" target="_blank" href="../<%= field.relationship.entity %>/new">Add</a>
+								<div class="bfh-selectbox hidden sls-crudface-select-add" data-name="<%= field.name %>" data-entity="<%= field.relationship.entity %>" data-value="<%= record[field.name] ? record[field.name] : "" %>" data-filter="true">
 									<div class="bfh-selectbox-option" data-value=""></div>
 									<% _.each(field.options, function(option) { %>
 										<div class="bfh-selectbox-option" data-value="<%= option.id ? option.id : option %>"><%= option.id ? option.text : option %></div>

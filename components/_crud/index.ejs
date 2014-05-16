@@ -85,7 +85,15 @@
 		</tr>
 		
 
-		<% _.each(records, function(record) { %>
+		<% _.each(records, function(record) { 
+			if (!record._crudConfig){
+				record._crudConfig = {
+					canShow : true,
+					canEdit : true,
+					canDelete : true
+				}
+			}
+			%>
 		<tr data-id="<%= record.id %>" data-model="record">
 			<% var mode = "i" ; %>
 			<% _.each(fields, function(field) { %> 
@@ -93,20 +101,33 @@
 					<td class="<%= field.class ? field.class : '' %>"><%= record[field.name] ? record[field.name].crudRender() : "" %></td>
 				<% } %>
 			<% }) %>	
-			
-			
-			<td><a href="../<%= controller %>/show/<%= record.id %>" class="btn btn-sm btn-primary">Show</a></td>
-			<td><a href="../<%= controller %>/edit/<%= record.id %>" class="btn btn-sm btn-warning">Edit</a></td>
+			<td>
+			<% if (record._crudConfig.canShow){ %>
+				<a href="../<%= controller %>/show/<%= record.id %>" class="btn btn-sm btn-primary">Show</a>
+			<% } %>
+			</td>
+			<td>
+			<% if (record._crudConfig.canEdit){ %>
+				<a href="../<%= controller %>/edit/<%= record.id %>" class="btn btn-sm btn-warning">Edit</a>
+			<% } %>
+			</td>
 
-			<td style="width:82px"><form action="../<%= controller %>/destroyAction/<%= record.id %>" method="POST">
-				<input type="hidden" name="_method" value="delete"/>
-				
-				<input id="deletebtn_<%= record.id %>" type="button" class="delconfirmbtn<%= record.id %> btn btn-sm btn-danger" value="Delete" onclick="$('.delconfirmbtn<%= record.id %>').toggleClass('hidden');"/>
-				
-				<input id="confirm_btn<%= record.id %>"type="submit" class="delconfirmbtn<%= record.id %> btn btn-sm btn-danger hidden" value="Confirm"/>
-				
-				<input type="hidden" name="_csrf" value="<%= _csrf %>" />
-			</form></td>
+			<td style="width:82px">
+			<% if (record._crudConfig.canDelete){ %>
+				<form action="../<%= controller %>/destroyAction/<%= record.id %>" method="POST">
+					<input type="hidden" name="_method" value="delete"/>
+					
+					<input id="deletebtn_<%= record.id %>" type="button" class="delconfirmbtn<%= record.id %> btn btn-sm btn-danger" value="Delete" onclick="$('.delconfirmbtn<%= record.id %>').toggleClass('hidden');"/>
+					
+					<input id="confirm_btn<%= record.id %>"type="submit" class="delconfirmbtn<%= record.id %> btn btn-sm btn-danger hidden" value="Confirm"/>
+					
+					<input type="hidden" name="_csrf" value="<%= _csrf %>" />
+				</form>
+			<% } %>
+			<% if (record._crudConfig.gotoUrl){ %>
+				<a href="<%= record._crudConfig.gotoUrl %>" class="btn btn-sm btn-primary">Goto</a>
+			<% } %>
+			</td>
 		</tr> 
 
 		<% }) %>

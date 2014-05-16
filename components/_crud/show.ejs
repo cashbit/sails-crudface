@@ -53,16 +53,18 @@
 								</fieldset>
 							<% } %>
 
-							<% if (field.type == 'select' || field.type == 'read-only-select') { %>
+							<% if (field.type == 'select' || field.type == 'read-only-select'|| field.type == 'add-select') { %>
 								
 									<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
 									<%
 									var value = "" ;
 									var lookUpUrl = false ;
 									if (record[field.name] !== undefined){
-										var fieldName = field.relationship.inname ;
-										value = record[field.name][fieldName] ;
-										lookUpUrl = "/" + field.relationship.entity + "/show/" + record[field.name].id ;
+										if (field.relationship){
+											var fieldName = field.relationship.inname ;
+											value = record[field.name][fieldName] ;
+											lookUpUrl = "/" + field.relationship.entity + "/show/" + record[field.name].id ;
+										}
 									}
 									%>
 									<div class="input-group">
@@ -152,3 +154,15 @@
 			<% } %>
 	<% }) %>	
 </div>
+
+<% if (showAttachments) { %>
+
+<!-- Attachments -->
+<div class="container">
+	<% var attachmentClassName = controller ; %> 
+	<% var attachmentIsPublic = attachmentIsPublic ; %>
+	<% include ../fileuploads/attachments.ejs %>
+</div>
+<!-- /Attachments -->
+
+<% } %>

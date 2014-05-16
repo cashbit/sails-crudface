@@ -199,7 +199,7 @@
 					var value = "" ;
 					_.each(footerFieldsConfig, function(footerField) {
 						if (footerField.name === field.name){
-							value = footerField.value ;
+							value = footerField.value ? footerField.value : "" ;
 						}
 					}) ; %> 
 					<td class="<%= field.class ? field.class : '' %>"><%= value.crudRender() %></td>	
