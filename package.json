@@ -1,9 +1,8 @@
 {
     "name": "sails-crudface",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "description": "A sailsjs node module for \"systematic\" scrud interface generation",
     "dependencies": {
-        "sails": "latest"
     },
     "repository": "https://github.com/cashbit/sails-crudface.git",
     "author": "Cashbit"
