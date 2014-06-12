@@ -67,8 +67,8 @@ var _crud = {
 
 	optionRefresh: function(selectToRefresh){
 		var entity = $(selectToRefresh).attr('data-entity') ;
-		$.get( '/'+entity+'/findforselect', function( data ) {
-			var selectOptions = $('.bfh-selectbox[data-name="' + entity + '"] .bfh-selectbox-options > div > ul').empty();
+		$.get( '/'+entity+'/findforselect?__viewlimit=all', function( data ) {
+			var selectOptions = $(selectToRefresh).find('.bfh-selectbox-options > div > ul').empty();
 			for (var i=0;i<data.length;i++){
 				selectOptions.append('<li><a tabindex="-1" href="#" data-option="'+ data[i].id + '">'+ data[i].value +'</a></li>') ;
 			}

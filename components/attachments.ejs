@@ -1,0 +1,47 @@
+<h3>Attachments</h3>
+<div class="well">
+	<div class="row">
+		<div class="col-md-6">
+			<h4>Drag &amp; drop your files here or click to search</h4>
+			<form action="/fileuploads/send" class="dropzone" id="myAwesomeDropzone">
+		      <input type="hidden" name="recordid" value="<%= record.id %>" />
+		      <input type="hidden" name="classname"	value="<%= attachmentClassName %>" />
+		      <% if (attachmentIsPublic) {%><input type="hidden" name="public"	value="public" /><% } %>
+		      <input type="hidden" name="_csrf" value="<%= _csrf %>" />
+		  	</form>
+		</div>
+		<div class="col-md-6">
+			<h4>Attached files</h4>
+			<ul class="attachedfiles list-unstyled">
+				<!--
+						Example function for the model, to call in the controller useful to populate "attachedFiles"
+
+						getAttachedFiles: function(){
+							var Q = require('q') ;
+							var deferred = Q.defer();
+							Fileuploads
+								.find({classname:'quotation', recordid: this.id}, function(err,attachmentsFound){
+									if (err) {
+										deferred.reject(new Error(err));
+									} else {
+										deferred.resolve(attachmentsFound);
+									}
+								});
+							return deferred.promise;
+						}
+
+
+				-->
+				<% _.each(attachedFiles, function(attachedFile) { %>
+					<li id="fileUpload_<%= attachedFile.id %>">
+						<input class="fileUploadCheckBoxes" type="checkbox" id="fileUploadCheck_<%= attachedFile.id %>" />
+						<a href="/fileuploads/receive/<%= attachedFile.id %>">
+						<%= attachedFile.originaldata.originalFilename %>
+						</a>
+					</li>
+				<% }) %>
+			</ul>
+			<a class="btn btn-danger btn-sm" onclick="fileUploadRemoveSelected('<%= attachmentClassName %>');">Remove selected attachments</a>
+		</div>
+	</div>
+</div>

@@ -89,6 +89,7 @@ The following steps are needed to add the necessary assets to your sails project
 4. FileUploads controller and model: in order to manage not only text, date and number fields but file attachments too, you need to:
 	1. copy the FileuploadsController.js file in the ```api/controllers``` folder
 	2. generate the Fileuploads model with:```sails generate model Fileuploads```
+	3. copy the attachment.ejs view in the folder ```views/fileuploads``` (you have to create this new folder)
 	
 We are planning to automate the whole installation process in future versions.
 

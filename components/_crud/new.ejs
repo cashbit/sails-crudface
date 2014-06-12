@@ -46,7 +46,7 @@
 
 							<% if (field.type == 'select') { %>
 								<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
-								<div class="bfh-selectbox hidden" data-name="<%= field.name %>" data-entity="<%= field.relationship.entity %>" data-value="<%= record[field.name] ? record[field.name] : "" %>" data-filter="true">
+								<div class="bfh-selectbox hidden" data-name="<%= field.name %>"  data-value="<%= record[field.name] ? record[field.name] : "" %>" data-filter="true">
 									<div class="bfh-selectbox-option" data-value=""></div>
 									<% _.each(field.options, function(option) { %>
 										<div class="bfh-selectbox-option" data-value="<%= option.id ? option.id : option %>"><%= option.id ? option.text : option %></div>
