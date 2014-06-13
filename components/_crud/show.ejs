@@ -65,6 +65,8 @@
 											value = record[field.name][fieldName] ;
 											lookUpUrl = "/" + field.relationship.entity + "/show/" + record[field.name].id ;
 										}
+									} else {
+										value = record[field.name] ;
 									}
 									%>
 									<div class="input-group">
@@ -92,7 +94,7 @@
 							<% if (field.type == 'textarea') { %>
 								<div>
 									<p style="font-weight:bold" for="<%= field.name %>"><%= field.label ? field.label : field.name %></p>
-									<p ><%= record[field.name] ? record[field.name] : "" %></p>
+									<p ><%- record[field.name] ? record[field.name].replace(/\n/g,"<br />") : "" %></p>
 								</div>
 							<% } %>
 
