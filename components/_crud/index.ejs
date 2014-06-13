@@ -76,7 +76,7 @@
 			<% var mode = "i" ; %>
 			<% _.each(fields, function(field) { %> 
 				<% if (field.ines.indexOf(mode) > -1) { %>
-					<th><%= field.label ? field.label : field.name %></th>
+					<th class="<%= records[0] ? records[0][field.name].textAlign : "" %>"><%= field.label ? field.label : field.name %></th>
 				<% } %>
 			<% }) %>		
 			<th></th>
@@ -98,7 +98,7 @@
 			<% var mode = "i" ; %>
 			<% _.each(fields, function(field) { %> 
 				<% if (field.ines.indexOf(mode) > -1) { %>
-					<td class="<%= field.class ? field.class : '' %>"><%= record[field.name] ? record[field.name].crudRender() : "" %></td>
+					<td class="<%= field.class ? field.class : '' %> <%= record[field.name].textAlign %>"><%= record[field.name] ? record[field.name].crudRender(field.format) : "" %></td>
 				<% } %>
 			<% }) %>	
 			<td>

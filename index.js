@@ -47,8 +47,35 @@
     return new Date(outputDateElements) ;
   };
 
-  Number.prototype.crudRender = function(){
-    return this.formatNumber() ;
+  Number.prototype.textAlign = "text-right" ;
+
+  Number.prototype.localeThousandSeparator = function(){
+    return "." ;
+  }
+  Number.prototype.localeDecimalSeparator = function(){
+    return "," ;
+  }
+
+  Number.prototype.localeCurrencySymbol = function(){
+    return "&euro; " ;
+  }
+
+  Number.prototype.localeCurrecyDecimals = function(){
+    return 2 ;
+  }
+
+  Number.prototype.crudRender = function(config){
+    if (!config) return this.formatNumber();
+    if (config == 'integer') return this.formatNumber(0,this.localeDecimalSeparator(),this.localeThousandSeparator()) ;
+    if (config == 'year') return this.formatNumber(0,this.localeDecimalSeparator(),"") ;
+    if (config == 'float') return this.formatNumber(null,this.localeDecimalSeparator(),this.localeThousandSeparator()) ;
+    if (config == 'currency') return this.formatNumber(
+        this.localeCurrecyDecimals(),
+        this.localeDecimalSeparator(),
+        this.localeThousandSeparator(),
+        this.localeCurrencySymbol()
+    ) ;
+    return this.formatNumber(config.c,config.d,config.t,config.m) ;
   };
 
   Number.prototype.formatMoney = function(c, d, t){
@@ -62,7 +89,7 @@
      return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
    };
 
-  Number.prototype.formatNumber = function(c, d, t){
+  Number.prototype.formatNumber = function(c, d, t, m){
     var n = this,
       c = isNaN(c = Math.abs(c)) ? 2 : c,
       d = d == undefined ? "," : d,
@@ -70,7 +97,9 @@
       s = n < 0 ? "-" : "",
       i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "",
       j = (j = i.length) > 3 ? j % 3 : 0;
-     return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+      // todo: use M to position before or after the currecy symbol...
+      m = m == undefined ? "" : " " + m ;
+     return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "") + m;
   };
 
   Date.prototype.crudRender = function(){

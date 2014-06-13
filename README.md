@@ -416,6 +416,46 @@ Useful to display calculated values, or one-time-editing fields, like in the exa
 In this example the field is defined two times, the first will be used in the ```new``` view (during record creation) and the second both in the ```edit``` and ```show``` view.
 
 
+###### Formatting numbers
+
+You can specify some pre-defined formats in the ```format``` property both for "text" and "read-only-text" fields:
+
+- year --> 2014
+- currency --> 10.000,00 € 
+- integer --> 10.000
+- float --> 10.000,2345
+
+Or you can specify custom format like this:
+
+```
+{c:1,t:"'","d":"/","m":"L."} --> 10'000/3 L.
+```
+
+Example
+
+```
+{
+	"prettyName" : "Budget",
+
+	"layout": [
+		{
+			"section": "", "rows": [
+				{"year":2, "amount":3,"qty":2,"meanvalue":3}
+			]
+		}
+	],
+
+	"fieldsConfig" : [
+		{"name": "year", "ines": "ines", "type": "text", "inname": true, "format":"year"},
+		{"name": "amount", "ines":"ines", "type": "text","format":"currency"},
+		{"name": "qty", "ines":"ines","type":"text", "format":"integer"},
+		{"name": "meanvalue", "ines":"ines","type":"read-only-text", "format":"currency"}
+	]
+}
+```
+
+
+
 ##### type: link
 
 ```
