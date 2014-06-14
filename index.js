@@ -831,7 +831,15 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
             } else {
               record[field.name+"_id"] = record[field.name] ;
               if (foundRecord){
-                record[field.name] = relationship.inname ? foundRecord[relationship.inname] : foundRecord.inName() ;
+                if (typeof(relationship.inname) == "object"){
+                  var values = [] ;
+                  for (var i=0;i<relationship.inname.length;i++){
+                    values.push(foundRecord[relationship.inname[i]]) ;
+                  }
+                  record[field.name] = values.join(" ") ;
+                } else {
+                  record[field.name] = relationship.inname ? foundRecord[relationship.inname] : foundRecord.inName() ;
+                }
               } else {
                 record[field.name] = null ;
               }
@@ -1207,7 +1215,7 @@ module.exports.compileOptionsForRelationships = function(field,relationshipcallb
 
   var relationship = field.relationship ;
   sails.models[relationship.entity]
-    .find()
+    .find(field.relationship.filter)
     .exec(function(err,foundRecords){
       if (err){
         relationshipcallback(err) ;
@@ -1215,10 +1223,23 @@ module.exports.compileOptionsForRelationships = function(field,relationshipcallb
       }
       var options = [] ;
       for (var i=0;i<foundRecords.length;i++){
-        var option = {
-          id: foundRecords[i].id,
-          text : relationship.inname ? foundRecords[i][relationship.inname] : foundRecords[i].inName()
-        };
+        console.log(typeof(relationship.inname) );
+        if (typeof(relationship.inname) == "object"){
+          var values = [] ;
+          for (var n=0;n<relationship.inname.length;n++){
+            values.push(foundRecords[i][relationship.inname[n]]) ;
+          }
+          var option = {
+            id: foundRecords[i].id,
+            text : values.join(" ")
+          }; 
+        } else {
+          var option = {
+            id: foundRecords[i].id,
+            text : relationship.inname ? foundRecords[i][relationship.inname] : foundRecords[i].inName()
+          };         
+        }
+
         options.push(option);
       }
 

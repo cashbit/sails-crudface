@@ -535,6 +535,8 @@ Another way to populate a dropdown list is ```relationship```, like in the examp
 In this case, you must provide a model called "customer" where the controller will find the list of customer to display in the drop-down list.
 
 The list is filtered with the ```filter``` expression, the drop-down list values are populated with the ids of records(objects) and the option value with the ```inname``` field. 
+You can also specify an array of fieldnames for the ```inname``` property.
+The field values will be joined in the option text with a space character.
 
 This means that if the "customer" record/object has a field "name", the value of that field will appear in the drop-down list, but the value stored in the contact record is the id of the selected customer in the drop-down list.
 

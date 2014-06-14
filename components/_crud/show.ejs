@@ -49,7 +49,7 @@
 							<% if (field.type == 'text' || field.type == 'read-only-text') { %>
 								<fieldset disabled>
 									<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
-									<input type="text" class="form-control " placeholder="<%= field.label ? field.label : field.name %>" name="<%= field.name %>" value="<%= record[field.name] != "undefined" ? record[field.name].crudRender(field.format) : "" %>"/>
+									<input type="text" class="form-control " placeholder="<%= field.label ? field.label : field.name %>" name="<%= field.name %>" value="<%= record[field.name] != undefined ? record[field.name].crudRender(field.format) : "" %>"/>
 								</fieldset>
 							<% } %>
 
@@ -61,8 +61,17 @@
 									var lookUpUrl = false ;
 									if (record[field.name] !== undefined){
 										if (field.relationship){
-											var fieldName = field.relationship.inname ;
-											value = record[field.name][fieldName] ;
+											if (typeof(field.relationship.inname) == "object"){
+												var values = [] ;
+												for (var n=0;n<field.relationship.inname.length;n++){
+													var fieldName = field.relationship.inname[n] ;
+													values.push(record[field.name][fieldName]) ;
+												}
+												value = values.join(" ") ;
+											} else {
+												var fieldName = field.relationship.inname ;
+												value = record[field.name][fieldName] ;
+											}
 											lookUpUrl = "/" + field.relationship.entity + "/show/" + record[field.name].id ;
 										} else {
 											value = record[field.name] ;
