@@ -811,7 +811,7 @@ module.exports.beforeView = function(record,cb){
 	record._crudConfig.canEdit = false ;
 	record._crudConfig.gotoUrl = '/proposal/show/'+record.id
 } ;
-
+```
 
 ## Runtime javascript API
 
