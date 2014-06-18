@@ -423,7 +423,8 @@ You can specify some pre-defined formats in the ```format``` property both for "
 - year --> 2014
 - currency --> 10.000,00 € 
 - integer --> 10.000
-- float --> 10.000,2345
+- float --> 10.000,23
+- percent --> 10,02 %
 
 Or you can specify custom format like this:
 

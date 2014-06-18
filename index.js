@@ -66,9 +66,13 @@
 
   Number.prototype.crudRender = function(config){
     if (!config) return this.formatNumber();
+    if (config == 'percent'){
+      var p = this * 100 ;
+      return p.formatNumber(2,this.localeDecimalSeparator(),this.localeThousandSeparator()) + " %" ;
+    } 
     if (config == 'integer') return this.formatNumber(0,this.localeDecimalSeparator(),this.localeThousandSeparator()) ;
     if (config == 'year') return this.formatNumber(0,this.localeDecimalSeparator(),"") ;
-    if (config == 'float') return this.formatNumber(null,this.localeDecimalSeparator(),this.localeThousandSeparator()) ;
+    if (config == 'float') return this.formatNumber(2,this.localeDecimalSeparator(),this.localeThousandSeparator()) ;
     if (config == 'currency') return this.formatNumber(
         this.localeCurrecyDecimals(),
         this.localeDecimalSeparator(),
@@ -1223,7 +1227,6 @@ module.exports.compileOptionsForRelationships = function(field,relationshipcallb
       }
       var options = [] ;
       for (var i=0;i<foundRecords.length;i++){
-        console.log(typeof(relationship.inname) );
         if (typeof(relationship.inname) == "object"){
           var values = [] ;
           for (var n=0;n<relationship.inname.length;n++){
