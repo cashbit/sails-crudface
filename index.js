@@ -73,6 +73,12 @@
     if (config == 'integer') return this.formatNumber(0,this.localeDecimalSeparator(),this.localeThousandSeparator()) ;
     if (config == 'year') return this.formatNumber(0,this.localeDecimalSeparator(),"") ;
     if (config == 'float') return this.formatNumber(2,this.localeDecimalSeparator(),this.localeThousandSeparator()) ;
+    if (config == 'currencyNoDec') return this.formatNumber(
+        0,
+        this.localeDecimalSeparator(),
+        this.localeThousandSeparator(),
+        this.localeCurrencySymbol()
+    ) ;
     if (config == 'currency') return this.formatNumber(
         this.localeCurrecyDecimals(),
         this.localeDecimalSeparator(),

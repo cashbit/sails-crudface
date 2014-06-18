@@ -185,7 +185,7 @@
 			%>
 			<tr class="<%= buttonClassName  %> compare_<%= buttonClassName %> compareBtn" data-id="<%= record[compareConfig.objectIdFieldName] %>" data-model="record">
 				<% _.each(compareConfig.summaryFields, function(field) { %> 
-					<td class="<%= field.class ? field.class : '' %>"><%= record[field.name] ? record[field.name].crudRender() : "" %></td>
+					<td class="<%= field.class ? field.class : '' %>"><%= record[field.name] ? record[field.name].crudRender(field.format) : "" %></td>
 				<% }) %>	
 				
 				<td><a href="<%= buttonHref %>" class="btn btn-sm btn-primary">Show</a></td>
@@ -199,10 +199,10 @@
 					var value = "" ;
 					_.each(footerFieldsConfig, function(footerField) {
 						if (footerField.name === field.name){
-							value = footerField.value ? footerField.value : "" ;
+							value = footerField.value ? footerField.value.crudRender(footerField.format) : "" ;
 						}
 					}) ; %> 
-					<td class="<%= field.class ? field.class : '' %>"><%= value.crudRender() %></td>	
+					<td class="<%= field.class ? field.class : '' %>"><%= value %></td>	
 				<% }) %>
 			</tr>
 		</table>	  	
