@@ -807,7 +807,7 @@ If specified in the controller, this function is called for each record will be 
 You can modify the record and then call cb([err]).
 
 ```
-module.exports.beforeView = function(record,cb){
+module.exports.beforeIndex = function(req,res,record,cb){
 	record._crudConfig.canShow = false ;
 	record._crudConfig.canDelete = false ;
 	record._crudConfig.canEdit = false ;
@@ -832,5 +832,3 @@ Example follow for the ```show``` view:
 </script>
 
 ```
-
-

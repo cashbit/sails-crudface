@@ -882,7 +882,7 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
                   canEdit : true,
                   canDelete : true
                 }
-                controller.exports.beforeIndex(record,cb) ;
+                controller.exports.beforeIndex(req,res,record,cb) ;
               },
               function(err){
                 if (err) {
