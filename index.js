@@ -322,9 +322,12 @@ module.exports.loadConfig = function(controller){
         controllerAPIDelegate = sails.services['sails-crudface-accessmanager'] ;
       }
       if (controllerAPIDelegate){
-        if (controllerAPIDelegate.beforeIndex) controller.exports.beforeIndex = controllerAPIDelegate.beforeIndex ;
-        if (controllerAPIDelegate.beforeCreate) controller.exports.beforeCreate = controllerAPIDelegate.beforeCreate ;
         if (controllerAPIDelegate.getFilter) controller.exports.getFilter = controllerAPIDelegate.getFilter ;
+        if (controllerAPIDelegate.beforeIndex) controller.exports.beforeIndex = controllerAPIDelegate.beforeIndex ;
+        if (controllerAPIDelegate.beforeShow) controller.exports.beforeShow = controllerAPIDelegate.beforeShow ;
+        if (controllerAPIDelegate.beforeCreate) controller.exports.beforeCreate = controllerAPIDelegate.beforeCreate ;
+        if (controllerAPIDelegate.beforeUpdate) controller.exports.beforeUpdate = controllerAPIDelegate.beforeUpdate ;
+        if (controllerAPIDelegate.beforeDelete) controller.exports.beforeDelete = controllerAPIDelegate.beforeDelete ;
       }
     }
   }
@@ -527,18 +530,6 @@ module.exports.createAction = function(req,res,next,controller){
             }
           }
         }
-/*
-        if (fields[i].ines.indexOf('n') > -1){
-          if (fields[i].type == 'date'){
-            if (req.param(fieldName).toDateFromLocale){
-              var date = req.param(fieldName).toDateFromLocale() ;
-              if (date.toString() !== "Invalid Date") newObj[fieldName] = date ;
-            }
-          } else {
-            newObj[fieldName] = req.param(fieldName) ;
-          }
-        } 
-*/
       }
       if (req.session.User){
         if (!newObj.creator) newObj.creator = req.session.User.id ;
@@ -938,149 +929,165 @@ module.exports.readView = function(req,res,next,controller,callback){
     if (err) next(err) ;
     var inname = name ;
     if (!foundRecord) return res.send(404);
-    if (foundRecord.name) inname = foundRecord.name ;
-    module.exports.addUrlToBreadCrumbs(req, inname, "/" + name + "/show/" + req.param('id')) ;
-    var viewConfig = {
-        fields: controller.exports.fieldsConfig,
-        fieldlayout: layout,
-        controller: controller.exports.identity,
-        prettyName: controller.exports.prettyName,
-        showAttachments : controller.exports.showAttachments | false,
-        attachmemtIsPublic : controller.exports.attachmemtIsPublic | true,
-        record : foundRecord
-    } ;
-
-
-    module.exports.addConfigurationToViewConfig(req,res,viewConfig);
-
-    var relationships = [] ;
-    var buttongroupsrelationships = [] ;
-    var details = [] ;
-    for (var i=0;i<viewConfig.fields.length;i++){
-      var field = viewConfig.fields[i] ;
-      if (field.type == 'checkbox'){
-        var checkedValue = field.checkedValue === undefined ? true : field.checkedValue ;
-        var uncheckedValue = field.uncheckedValue === undefined ? false : field.uncheckedValue ;
-        field.checked = (foundRecord[field.name] == checkedValue) ;
-      }
-      if ((field.type != 'buttongroup') && field.relationship){
-        relationships.push({
-          entity:field.relationship.entity,
-          attribute : field.name
-        }) ;
-      }
-      if ((field.type == 'buttongroup') && field.relationship){
-        buttongroupsrelationships.push(field) ;
-      }
-      if (field.type == "detail"){
-        details.push(field) ;
-      }
+    if (controller.exports.beforeShow){
+      controller.exports.beforeShow(req,res,foundRecord,function(err){
+        if (err) {
+          sails.log.warn(err) ;
+          return res.send(404);
+        } else {
+          run() ;
+        }
+      }) ;
+    } else {
+      run() ;
     }
 
-    function compileRelationshipOnRecord(relationship, record, callback){
-      var recordId = record[relationship.attribute] ;
-      sails.models[relationship.entity].findOne({id:recordId},function(err,foundRecord){
-        if (err) return callback(err) ;
-        record[relationship.attribute] = foundRecord ;
-        callback() ;
-      });
-    }
+    function run(){
+      if (foundRecord.name) inname = foundRecord.name ;
+      module.exports.addUrlToBreadCrumbs(req, inname, "/" + name + "/show/" + req.param('id')) ;
+      var viewConfig = {
+          fields: controller.exports.fieldsConfig,
+          fieldlayout: layout,
+          controller: controller.exports.identity,
+          prettyName: controller.exports.prettyName,
+          showAttachments : controller.exports.showAttachments | false,
+          attachmemtIsPublic : controller.exports.attachmemtIsPublic | true,
+          record : foundRecord
+      } ;
 
-    function compileRelationshipOnRecordWithInName(relationship, record, callback){
-      var recordId = record[relationship.attribute] ;
-      sails.models[relationship.entity].findOne({id:recordId},function(err,foundRecord){
-        if (err) return callback(err) ;
-        record[relationship.attribute] = foundRecord.name ? foundRecord.name : foundRecord.inName() ;
-        callback() ;
-      });
-    }
 
-    function compileDetails(detailConfig,callback){
-      /*
-      {"name": "activeCountries", "ines":"nes", "type":"detail", "model":"country","key":"agent", "fields":[
-        {"name":"name","label":"Country"},
-        {"name":"areamanager", "label":"Area manager"}
-      ]}
-      */
+      module.exports.addConfigurationToViewConfig(req,res,viewConfig);
 
-      
-
-      var filter = detailConfig.filter || {} ;
-      filter[detailConfig.key] = foundRecord.id ;
       var relationships = [] ;
-      var attributes = sails.models[detailConfig.model]._attributes ;
-      for (var attrname in attributes){
-        var attribute = attributes[attrname] ;
-        if (attribute.model){
+      var buttongroupsrelationships = [] ;
+      var details = [] ;
+      for (var i=0;i<viewConfig.fields.length;i++){
+        var field = viewConfig.fields[i] ;
+        if (field.type == 'checkbox'){
+          var checkedValue = field.checkedValue === undefined ? true : field.checkedValue ;
+          var uncheckedValue = field.uncheckedValue === undefined ? false : field.uncheckedValue ;
+          field.checked = (foundRecord[field.name] == checkedValue) ;
+        }
+        if ((field.type != 'buttongroup') && field.relationship){
           relationships.push({
-            attribute : attrname,
-            entity: attribute.model
+            entity:field.relationship.entity,
+            attribute : field.name
           }) ;
         }
+        if ((field.type == 'buttongroup') && field.relationship){
+          buttongroupsrelationships.push(field) ;
+        }
+        if (field.type == "detail"){
+          details.push(field) ;
+        }
       }
 
-      if (!detailConfig.fieldSort){
-        detailConfig.fieldSort = {} ;
-        for (var i=0;i<detailConfig.fields.length;i++){
-          var field = detailConfig.fields[i] ;
-          if (field.inname){
-            controller.exports.fieldSort[field.name] = 'asc' ;
+      function compileRelationshipOnRecord(relationship, record, callback){
+        var recordId = record[relationship.attribute] ;
+        sails.models[relationship.entity].findOne({id:recordId},function(err,foundRecord){
+          if (err) return callback(err) ;
+          record[relationship.attribute] = foundRecord ;
+          callback() ;
+        });
+      }
+
+      function compileRelationshipOnRecordWithInName(relationship, record, callback){
+        var recordId = record[relationship.attribute] ;
+        sails.models[relationship.entity].findOne({id:recordId},function(err,foundRecord){
+          if (err) return callback(err) ;
+          record[relationship.attribute] = foundRecord.name ? foundRecord.name : foundRecord.inName() ;
+          callback() ;
+        });
+      }
+
+      function compileDetails(detailConfig,callback){
+        /*
+        {"name": "activeCountries", "ines":"nes", "type":"detail", "model":"country","key":"agent", "fields":[
+          {"name":"name","label":"Country"},
+          {"name":"areamanager", "label":"Area manager"}
+        ]}
+        */
+
+        
+
+        var filter = detailConfig.filter || {} ;
+        filter[detailConfig.key] = foundRecord.id ;
+        var relationships = [] ;
+        var attributes = sails.models[detailConfig.model]._attributes ;
+        for (var attrname in attributes){
+          var attribute = attributes[attrname] ;
+          if (attribute.model){
+            relationships.push({
+              attribute : attrname,
+              entity: attribute.model
+            }) ;
           }
         }
+
+        if (!detailConfig.fieldSort){
+          detailConfig.fieldSort = {} ;
+          for (var i=0;i<detailConfig.fields.length;i++){
+            var field = detailConfig.fields[i] ;
+            if (field.inname){
+              controller.exports.fieldSort[field.name] = 'asc' ;
+            }
+          }
+        }
+
+        sails.models[detailConfig.model].find(filter).sort(detailConfig.fieldSort).exec(function(err,foundRecords){
+          detailConfig.records = foundRecords ;
+          if (err) return callback(err) ;
+          if (foundRecords.length === 0) return callback() ;
+          async.each(foundRecords,function(detailfoundRecord,detailFoundCallback){
+            async.each(
+              relationships,
+              function(relationship,callback){
+                compileRelationshipOnRecord(relationship,detailfoundRecord,callback);
+              },
+              function(err){
+                detailFoundCallback(err);
+              }
+            );
+          },function(err){
+            callback(err) ;
+          });
+        });
       }
 
-      sails.models[detailConfig.model].find(filter).sort(detailConfig.fieldSort).exec(function(err,foundRecords){
-        detailConfig.records = foundRecords ;
-        if (err) return callback(err) ;
-        if (foundRecords.length === 0) return callback() ;
-        async.each(foundRecords,function(detailfoundRecord,detailFoundCallback){
-          async.each(
-            relationships,
-            function(relationship,callback){
-              compileRelationshipOnRecord(relationship,detailfoundRecord,callback);
-            },
-            function(err){
-              detailFoundCallback(err);
-            }
-          );
-        },function(err){
-          callback(err) ;
-        });
-      });
+
+      async.parallel({
+          relationships: function(rcallback){
+            async.each(
+              relationships,
+              function(relationship,callback){
+                compileRelationshipOnRecord(relationship,foundRecord,callback);
+              },
+              function(err){
+                rcallback(err);
+              }
+            );
+          },
+          buttonGroups: function(bgcallback){
+            async.each(buttongroupsrelationships,module.exports.compileOptionsForRelationships,function(err){
+              bgcallback(err);
+            });
+          },
+          details: function(fcallback){
+            async.each(details,compileDetails,function(err){
+              fcallback(err);
+            });
+          },
+          attachments: function(acallback){
+            module.exports.attachedFilesList(name, req.param('id'), viewConfig, function(err){
+              acallback(err);
+            });
+          }
+      },
+      function(err, results) {
+          callback(viewConfig);
+      });      
     }
-
-
-    async.parallel({
-        relationships: function(rcallback){
-          async.each(
-            relationships,
-            function(relationship,callback){
-              compileRelationshipOnRecord(relationship,foundRecord,callback);
-            },
-            function(err){
-              rcallback(err);
-            }
-          );
-        },
-        buttonGroups: function(bgcallback){
-          async.each(buttongroupsrelationships,module.exports.compileOptionsForRelationships,function(err){
-            bgcallback(err);
-          });
-        },
-        details: function(fcallback){
-          async.each(details,compileDetails,function(err){
-            fcallback(err);
-          });
-        },
-        attachments: function(acallback){
-          module.exports.attachedFilesList(name, req.param('id'), viewConfig, function(err){
-            acallback(err);
-          });
-        }
-    },
-    function(err, results) {
-        callback(viewConfig);
-    });
+    
 
   });
 },
@@ -1094,31 +1101,48 @@ module.exports.updateView = function(req,res,next,controller,callback){
   var name = controller.exports.customIdentity || controller.exports.identity ;
   sails.models[name].findOne(req.param('id'),function(err,foundRecord){
     if (err) next(err) ;
-    var viewConfig = {
-          fields: controller.exports.fieldsConfig,
-          fieldlayout: layout,
-          controller: controller.exports.identity,
-          prettyName: controller.exports.prettyName,
-          record : foundRecord,
-          returnUrl: returnUrl
-    } ;
-    module.exports.addConfigurationToViewConfig(req,res,viewConfig);
-    var relationships = [] ;
-    for (var i=0;i<viewConfig.fields.length;i++){
-      var field = viewConfig.fields[i] ;
-      if (field.type == 'checkbox'){
-        var checkedValue = field.checkedValue === undefined ? true : field.checkedValue ;
-        var uncheckedValue = field.uncheckedValue === undefined ? false : field.uncheckedValue ;
-        field.checked = (foundRecord[field.name] == checkedValue) ;
-      }
-      if (field.relationship){
-        relationships.push(field) ;
-      }
+    if (!foundRecord) return res.send(404);
+    if (controller.exports.beforeUpdate){
+      controller.exports.beforeUpdate(req,res,foundRecord,function(err){
+        if (err) {
+          sails.log.warn(err) ;
+          return res.send(501);
+        } else {
+          run() ;
+        }
+      }) ;
+    } else {
+      run() ;
     }
 
-    async.each(relationships,module.exports.compileOptionsForRelationships,function(err){
-      callback(viewConfig);
-    });
+
+    function run(){
+      var viewConfig = {
+            fields: controller.exports.fieldsConfig,
+            fieldlayout: layout,
+            controller: controller.exports.identity,
+            prettyName: controller.exports.prettyName,
+            record : foundRecord,
+            returnUrl: returnUrl
+      } ;
+      module.exports.addConfigurationToViewConfig(req,res,viewConfig);
+      var relationships = [] ;
+      for (var i=0;i<viewConfig.fields.length;i++){
+        var field = viewConfig.fields[i] ;
+        if (field.type == 'checkbox'){
+          var checkedValue = field.checkedValue === undefined ? true : field.checkedValue ;
+          var uncheckedValue = field.uncheckedValue === undefined ? false : field.uncheckedValue ;
+          field.checked = (foundRecord[field.name] == checkedValue) ;
+        }
+        if (field.relationship){
+          relationships.push(field) ;
+        }
+      }
+
+      async.each(relationships,module.exports.compileOptionsForRelationships,function(err){
+        callback(viewConfig);
+      });
+    }
   });
 },
 
@@ -1160,20 +1184,36 @@ module.exports.updateAction = function(req,res,next,controller){
   if (req.session.User){
     if (!updateObj.updator) updateObj.updator = req.session.User.id ;
   }
-  sails.models[name].update({id:req.param('id')},updateObj, function (err, updatedObjs) {
-    if (err) {
-      console.log(err);
-      req.session.flash = {
-        err: err
-      };
-      if (returnUrl != "undefined") return res.redirect(returnUrl) ;
-      res.redirect('/'+ controller.exports.identity + '/show/' + req.param('id'));
-    } else {
-      sails.models[name].publishUpdate(req.param('id'),updatedObjs[0].toJSON());
-      if (returnUrl != "undefined") return res.redirect(returnUrl) ;
-      res.redirect('/'+ controller.exports.identity + '/show/' + req.param('id'));
-    }
-  });
+
+  if (controller.exports.beforeUpdate){
+    controller.exports.beforeUpdate(req,res,foundRecord,function(err){
+      if (err) {
+        sails.log.warn(err) ;
+        return res.send(501);
+      } else {
+        run() ;
+      }
+    }) ;
+  } else {
+    run() ;
+  }
+
+  function run(){
+    sails.models[name].update({id:req.param('id')},updateObj, function (err, updatedObjs) {
+      if (err) {
+        console.log(err);
+        req.session.flash = {
+          err: err
+        };
+        if (returnUrl != "undefined") return res.redirect(returnUrl) ;
+        res.redirect('/'+ controller.exports.identity + '/show/' + req.param('id'));
+      } else {
+        sails.models[name].publishUpdate(req.param('id'),updatedObjs[0].toJSON());
+        if (returnUrl != "undefined") return res.redirect(returnUrl) ;
+        res.redirect('/'+ controller.exports.identity + '/show/' + req.param('id'));
+      }
+    });
+  }
 },
 
 module.exports.destroyAction = function(req,res,next,controller){
@@ -1199,32 +1239,45 @@ module.exports.destroyAction = function(req,res,next,controller){
     sails.models[name].findOne(req.param('id'), function (err, objectToDelete) {
         if (err) return next(err);
         if (!objectToDelete) return next(controller.exports.prettyname + ' doesn\'t exist.');
-        var inname ;
-        sails.models[name].destroy(req.param('id'), function (err) {
-            if (err) return next(err);
-            if (typeof(objectToDelete.inName) == 'function'){
-              inname = objectToDelete.inName() ;
+        if (controller.exports.beforeDelete){
+          controller.exports.beforeDelete(req,res,objectToDelete,function(err){
+            if (err) {
+              sails.log.warn(err) ;
+              return res.send(501);
             } else {
-              var fields = controller.exports.fieldsConfig ;
-              var innamevalues = [] ;
-              for (var i=0;i<fields.length;i++){
-                var field = fields[i] ;
-                if (field.inname) innamevalues.push(objectToDelete[field.name]) ;
-              }
-              inname = innamevalues.join(' ') ;
+              run() ;
             }
-            sails.models[name].publishUpdate(req.param('id'), {
-              name: inname,
-              action: ' has been destroyed.'
-            });
-            sails.models[name].publishDestroy(req.param('id'));
-        });
-        if (returnUrl !== undefined) return res.redirect(returnUrl) ;
-        res.redirect('/' + controller.exports.identity);
+          }) ;
+        } else {
+          run() ;
+        }
+
+        function run(){
+          var inname ;
+          sails.models[name].destroy(req.param('id'), function (err) {
+              if (err) return next(err);
+              if (typeof(objectToDelete.inName) == 'function'){
+                inname = objectToDelete.inName() ;
+              } else {
+                var fields = controller.exports.fieldsConfig ;
+                var innamevalues = [] ;
+                for (var i=0;i<fields.length;i++){
+                  var field = fields[i] ;
+                  if (field.inname) innamevalues.push(objectToDelete[field.name]) ;
+                }
+                inname = innamevalues.join(' ') ;
+              }
+              sails.models[name].publishUpdate(req.param('id'), {
+                name: inname,
+                action: ' has been destroyed.'
+              });
+              sails.models[name].publishDestroy(req.param('id'));
+              if (returnUrl !== undefined) return res.redirect(returnUrl) ;
+              res.redirect('/' + controller.exports.identity);
+          });
+        }
     });
   }
-
-
 },
 
 module.exports.subscribe = function(req, res, controller) {
