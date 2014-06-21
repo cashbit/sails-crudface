@@ -14,4 +14,4 @@ The resulting user interface is plain and responsive HTML with [jQuery](http://j
 
 Sails it's an MVC realtime framework for web application development, please visit the [official site](http://sailsjs.org/) for more.
 
-See the [wiki](wiki) for docs.
+See the [wiki](../../wiki) for docs.
