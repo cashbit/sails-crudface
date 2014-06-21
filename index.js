@@ -176,20 +176,11 @@ module.exports.addConfigurationToViewConfig = function(req,res,config){
 module.exports.init = function(controller,fromPath){
   this.fromPath = fromPath ;
 
-  return {
+  var managedController = {
     index : function(req,res,next){
-      if (controller.exports.getFilter){
-        controller.exports.getFilter(req,res,function(err,filter){
-          if (err) return next(err) ;
-          module.exports.searchView(req,res,next,controller,filter,function(viewConfig){
-            res.view(viewConfig);
-          });
-        }) ;
-      } else {
         module.exports.searchView(req,res,next,controller,{},function(viewConfig){
           res.view(viewConfig);
         });
-      }
     },
 
     'new' : function(req,res,next){
@@ -275,6 +266,8 @@ module.exports.init = function(controller,fromPath){
       }) ;
     }
   } ;
+
+  return managedController ;
 } ;
 
 
@@ -320,6 +313,19 @@ module.exports.loadConfig = function(controller){
     if (dataString){
       var config = JSON.parse(dataString) ;
       if (config) _.extend(controller.exports,config);
+      if (controller.exports.accessManager){
+        var controllerAPIDelegate = sails.services[controller.exports.accessManager.toLowerCase()] ;
+        if (!controllerAPIDelegate){
+          throw new Error("BAD sails-crudface accessManager name: " + controller.exports.accessManager + ", service not found!") ;
+        }
+      } else {
+        controllerAPIDelegate = sails.services['sails-crudface-accessmanager'] ;
+      }
+      if (controllerAPIDelegate){
+        if (controllerAPIDelegate.beforeIndex) controller.exports.beforeIndex = controllerAPIDelegate.beforeIndex ;
+        if (controllerAPIDelegate.beforeCreate) controller.exports.beforeCreate = controllerAPIDelegate.beforeCreate ;
+        if (controllerAPIDelegate.getFilter) controller.exports.getFilter = controllerAPIDelegate.getFilter ;
+      }
     }
   }
 };
@@ -585,8 +591,8 @@ module.exports.addCustomFacet = function(viewConfig,caption,field,values,selecte
 },
 
 module.exports.searchView = function(req, res, next, controller, filter, callback) {
-    this.loadConfig(controller) ;
 
+    this.loadConfig(controller) ;
 
     function populateCompare(viewConfig){
       viewConfig.compareConfig = controller.exports.compareConfig ? controller.exports.compareConfig : {} ;
@@ -624,17 +630,15 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
           }
         }
       }
-
-      
     }
 
-    function makeFilter(){
+    function makeFilter(filter){
       if (controller.exports.facets){
         for (var i=0;i<controller.exports.facets.length;i++){
           var field = controller.exports.facets[i].field ;
           var fielddefined = (req.param(field) !== '') && (req.param(field) != 'undefined') && (req.param(field) !== undefined) ;
           if (fielddefined){
-            if (!filter.where) filter['where'] = {} ;
+            //if (!filter.where) filter['where'] = {} ;
             var attribute = false ;
             if (sails.models[controller.exports.customIdentity || controller.exports.identity]._attributes){
                 attribute = sails.models[controller.exports.customIdentity || controller.exports.identity]._attributes[field] ;
@@ -653,21 +657,27 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
               if (!isBoolean) isString = isNaN(parseFloat(req.param(field))) ;
             }
             if (isString){
-              filter.where[field] = req.param(field) ;
+              //filter.where[field] = req.param(field) ;
+              filter[field] = req.param(field) ;
             } else if (isBoolean){
               var boolValue = req.param(field) === 'true' ;
-              filter.where[field] = boolValue ;
+              //filter.where[field] = boolValue ;
+              filter[field] = boolValue ;
             } else {
-              filter.where[field] = parseFloat(req.param(field)) ;
+              //filter.where[field] = parseFloat(req.param(field)) ;
+              filter[field] = parseFloat(req.param(field)) ;
             }
             
-            if (filter.where[field] == '(blank)') filter.where[field] = '' ;
-            if (filter.where[field] == '(null)') filter.where[field] = null ;
+            //if (filter.where[field] == '(blank)') filter.where[field] = '' ;
+            //if (filter.where[field] == '(null)') filter.where[field] = null ;
+            if (filter[field] == '(blank)') filter[field] = '' ;
+            if (filter[field] == '(null)') filter[field] = null ;
 
-            sails.log.debug(filter) ;
+            //sails.log.debug(filter) ;
           }
         }
       }
+      return filter ;
     }
 
     function removeDuplicateIds(viewConfig){
@@ -768,65 +778,31 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
       viewConfig.records = outputrecords ;
     }
 
-    var name = controller.exports.customIdentity || controller.exports.identity ;
-    //module.exports.addUrlToBreadCrumbs(req, "List of " + name, "/" + name) ;
+    function calculateFooter(record,viewConfig){
+      
+      if (!viewConfig.footerFieldsConfig) return ;
 
-    makeFilter();
-
-    if (!controller.exports.fieldSort){
-      controller.exports.fieldSort = {} ;
-      for (var i=0;i<controller.exports.fieldsConfig.length;i++){
-        var field = controller.exports.fieldsConfig[i] ;
-        if (field.inname){
-          controller.exports.fieldSort[field.name] = 'asc' ;
+      for (var f=0;f<viewConfig.footerFieldsConfig.length;f++){
+        var footerFieldConfig = viewConfig.footerFieldsConfig[f] ;
+        footerFieldConfig.count = footerFieldConfig.count ? footerFieldConfig.count : 0 ;
+        var value = record[footerFieldConfig.name] ;
+        if (!value) value = 0;
+        if (footerFieldConfig.value === undefined) footerFieldConfig.value = 0 ;
+        if (footerFieldConfig.func === 'sum') footerFieldConfig.value += record[footerFieldConfig.name] ;
+        
+        if (footerFieldConfig.func === 'count'){
+          footerFieldConfig.value++ ;
         }
+        if (footerFieldConfig.func === 'average'){
+          footerFieldConfig.value = (footerFieldConfig.value * footerFieldConfig.count + value) / (footerFieldConfig.count+1) ;
+        }
+        footerFieldConfig.count++ ;
       }
     }
 
-    sails.models[name].find(filter).sort(controller.exports.fieldSort).exec(function(err, foundRecords) {
-      if (err) return next(err);
-      var viewConfig = {
-        fields: controller.exports.fieldsConfig,
-        controller: controller.exports.identity,
-        prettyName: controller.exports.prettyName,
-        records : foundRecords,
-        footerFieldsConfig : controller.exports.footerFieldsConfig
-      } ;
-
-      freeTextSearch(viewConfig) ;
-
-      module.exports.addConfigurationToViewConfig(req,res,viewConfig);
-
-      var relationships = [] ;
-      for (var i=0;i<viewConfig.fields.length;i++){
-        var field = viewConfig.fields[i] ;
-        if (field.relationship){
-          relationships.push(field) ;
-        }
-      }
-
-
-      function calculateFooter(record,viewConfig){
-        
-        if (!viewConfig.footerFieldsConfig) return ;
-
-        for (var f=0;f<viewConfig.footerFieldsConfig.length;f++){
-          var footerFieldConfig = viewConfig.footerFieldsConfig[f] ;
-          footerFieldConfig.count = footerFieldConfig.count ? footerFieldConfig.count : 0 ;
-          var value = record[footerFieldConfig.name] ;
-          if (!value) value = 0;
-          if (footerFieldConfig.value === undefined) footerFieldConfig.value = 0 ;
-          if (footerFieldConfig.func === 'sum') footerFieldConfig.value += record[footerFieldConfig.name] ;
-          
-          if (footerFieldConfig.func === 'count'){
-            footerFieldConfig.value++ ;
-          }
-          if (footerFieldConfig.func === 'average'){
-            footerFieldConfig.value = (footerFieldConfig.value * footerFieldConfig.count + value) / (footerFieldConfig.count+1) ;
-          }
-          footerFieldConfig.count++ ;
-        }
-      }
+    function run(filter){
+      var viewConfig ;
+      var relationships ;
 
       function populateRelationshipsOnRecord(record,populateCallBack){
         
@@ -865,40 +841,89 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
         });
       }
 
-      async.each(
-        foundRecords,
-        populateRelationshipsOnRecord,
-        function(err){
-          populateCompare(viewConfig);
-          populateFacets(viewConfig);
-          removeDuplicateIds(viewConfig);
-          cutRecordToViewLimit(viewConfig) ;
-          if (controller.exports.beforeIndex){
-            async.each(
-              viewConfig.records,
-              function(record,cb){
-                record._crudConfig = {
-                  canShow : true,
-                  canEdit : true,
-                  canDelete : true
-                }
-                controller.exports.beforeIndex(req,res,record,cb) ;
-              },
-              function(err){
-                if (err) {
-                  console.log("Error, beforeView") ;
-                  console.log(err) ;
-                }
-                callback(viewConfig);
-              }
-            );
-          } else {
-            callback(viewConfig) ;
-          }    
-        }
-      );
+      makeFilter(filter);
 
-    });
+      if (!controller.exports.fieldSort){
+        controller.exports.fieldSort = {} ;
+        for (var i=0;i<controller.exports.fieldsConfig.length;i++){
+          var field = controller.exports.fieldsConfig[i] ;
+          if (field.inname){
+            controller.exports.fieldSort[field.name] = 'asc' ;
+          }
+        }
+      }
+
+      sails.models[name].find(filter).sort(controller.exports.fieldSort).exec(function(err, foundRecords) {
+        if (err) return next(err);
+        viewConfig = {
+          fields: controller.exports.fieldsConfig,
+          controller: controller.exports.identity,
+          prettyName: controller.exports.prettyName,
+          records : foundRecords,
+          footerFieldsConfig : controller.exports.footerFieldsConfig
+        } ;
+
+        freeTextSearch(viewConfig) ;
+
+        module.exports.addConfigurationToViewConfig(req,res,viewConfig);
+
+        relationships = [] ;
+        for (var i=0;i<viewConfig.fields.length;i++){
+          var field = viewConfig.fields[i] ;
+          if (field.relationship){
+            relationships.push(field) ;
+          }
+        }
+
+
+
+        async.each(
+          foundRecords,
+          populateRelationshipsOnRecord,
+          function(err){
+            populateCompare(viewConfig);
+            populateFacets(viewConfig);
+            removeDuplicateIds(viewConfig);
+            cutRecordToViewLimit(viewConfig) ;
+            if (controller.exports.beforeIndex){
+              async.each(
+                viewConfig.records,
+                function(record,cb){
+                  record._crudConfig = {
+                    canShow : true,
+                    canEdit : true,
+                    canDelete : true
+                  }
+                  controller.exports.beforeIndex(req,res,record,cb) ;
+                },
+                function(err){
+                  if (err) {
+                    console.log("Error, beforeIndex") ;
+                    console.log(err) ;
+                  }
+                  callback(viewConfig);
+                }
+              );
+            } else {
+              callback(viewConfig) ;
+            }    
+          }
+        );
+
+      });
+    }
+
+    var name = controller.exports.customIdentity || controller.exports.identity ;
+    //module.exports.addUrlToBreadCrumbs(req, "List of " + name, "/" + name) ;
+
+    if (controller.exports.getFilter){
+      controller.exports.getFilter(req,res,function(err,filter){
+        if (err) return next(err) ;
+        run(filter);
+      }) ;
+    } else {
+      run() ;
+    }
 },
 
 module.exports.readView = function(req,res,next,controller,callback){
