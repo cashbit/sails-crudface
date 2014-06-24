@@ -629,7 +629,7 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
           var field = controller.exports.facets[i].field ;
           var fielddefined = (req.param(field) !== '') && (req.param(field) != 'undefined') && (req.param(field) !== undefined) ;
           if (fielddefined){
-            //if (!filter.where) filter['where'] = {} ;
+            if (!filter) filter = {} ;
             var attribute = false ;
             if (sails.models[controller.exports.customIdentity || controller.exports.identity]._attributes){
                 attribute = sails.models[controller.exports.customIdentity || controller.exports.identity]._attributes[field] ;
@@ -832,7 +832,7 @@ module.exports.searchView = function(req, res, next, controller, filter, callbac
         });
       }
 
-      makeFilter(filter);
+      filter = makeFilter(filter);
 
       if (!controller.exports.fieldSort){
         controller.exports.fieldSort = {} ;
@@ -1103,7 +1103,7 @@ module.exports.updateView = function(req,res,next,controller,callback){
     if (err) next(err) ;
     if (!foundRecord) return res.send(404);
     if (controller.exports.beforeUpdate){
-      controller.exports.beforeUpdate(req,res,foundRecord,function(err){
+      controller.exports.beforeUpdate(req,res,foundRecord,{},function(err){
         if (err) {
           sails.log.warn(err) ;
           return res.send(501);
@@ -1186,13 +1186,19 @@ module.exports.updateAction = function(req,res,next,controller){
   }
 
   if (controller.exports.beforeUpdate){
-    controller.exports.beforeUpdate(req,res,foundRecord,function(err){
+    sails.models[name].findOne({id:req.param('id')},function(err,foundRecord){
       if (err) {
         sails.log.warn(err) ;
-        return res.send(501);
-      } else {
-        run() ;
+        return res.send(404);
       }
+      controller.exports.beforeUpdate(req,res,foundRecord,updateObj,function(err){
+        if (err) {
+          sails.log.warn(err) ;
+          return res.send(501);
+        } else {
+          run() ;
+        }
+      }) ;
     }) ;
   } else {
     run() ;
