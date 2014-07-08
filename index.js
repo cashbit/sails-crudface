@@ -15,8 +15,14 @@
     };
   }
 
-  Boolean.prototype.crudRender = function(){
-    if (this.toString() === "true"){
+  Boolean.prototype.crudRender = function(params){
+    if (params){
+      if (this.toString() === "true"){
+        return params.name || params.label ;
+      } else {
+        return "" ;
+      }
+    } else if (this.toString() === "true"){
       return "YES" ;
     } else {
       return "NO" ;
@@ -66,6 +72,7 @@
 
   Number.prototype.crudRender = function(config){
     if (!config) return this.formatNumber();
+    if (config.format) config = config.format ;
     if (config == 'percent'){
       var p = this * 100 ;
       return p.formatNumber(2,this.localeDecimalSeparator(),this.localeThousandSeparator()) + " %" ;
