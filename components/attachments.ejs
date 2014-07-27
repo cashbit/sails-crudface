@@ -45,3 +45,57 @@
 		</div>
 	</div>
 </div>
+
+<script type="text/javascript">
+function fileUploadRemove(id,className){
+  socket.request('/fileuploads/remove/'+id,{classname:className},function(response){
+    if (response.ok){
+      $('#fileUpload_' + id).remove();
+    } else {
+      console.log(response) ;
+    }
+    if (typeof(onFileRemove) == 'function'){
+      onFileRemove(id,className,response) ;
+    }
+  });
+}
+
+
+function fileUploadRemoveSelected(attachmentClassName){
+  var selected = $('.fileUploadCheckBoxes') ;
+  for (var i=0;i<selected.length;i++){
+    var selectedelement = selected[i] ;
+    if (selectedelement.checked){
+      var fileupload_id = selectedelement.id ;
+      var id = fileupload_id.split('_')[1] ;
+      fileUploadRemove(id,attachmentClassName) ;    
+    }
+  }
+}
+
+$(document).ready(function(){
+	Dropzone.options.myAwesomeDropzone = {
+		init: function() {
+		  this.on('success', function(data,response) {
+		    if (response.id){
+		      $('.attachedfiles').append(
+		        '<li id="fileUpload_' +
+		        response.id +
+		        '"><input class="fileUploadCheckBoxes" type="checkbox" id="fileUploadCheck_' +
+		        response.id +
+		        '" />\n<a href="/fileuploads/receive/' +
+		        response.id+
+		        '">' +
+		        response.filename +
+		        '</a></li>'
+		        );
+		    }
+		    if (typeof(onFileUpload) == 'function'){
+		      onFileUpload(data,response) ;
+		    }
+		  });
+		}
+	};
+});
+
+</script>

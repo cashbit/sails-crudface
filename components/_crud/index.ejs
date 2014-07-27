@@ -59,7 +59,10 @@
 					<label class="control-label" for="<%= facet.config.field %>"><%= facet.config.caption %></label>
 					<div class="bfh-selectbox hidden" data-name="<%= facet.config.field %>" data-value="<%= facet.selectedvalue %>" data-filter="true">
 						<div class="bfh-selectbox-option" data-value="">(ALL)</div>
-						<% _.each(facet.values, function(value) { %>
+						<%
+							var sortedOptions = _.sortBy(facet.values,"option") ;
+						%>
+						<% _.each(sortedOptions, function(value) { %>
 							<div class="bfh-selectbox-option" data-value="<%= value.value %>"><%= value.option %> <%= value.count >-1 ? "(" + value.count + ")" : "" %></div>
 						<% }) %>
 					</div>
