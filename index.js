@@ -140,7 +140,16 @@
         outputDateElements.push(this.getFullYear()) ;
       }
     }
-    return outputDateElements.join('/') ;
+    var output = '' ;
+    for (var i=0;i<outputDateElements.length;i++){
+      var element = outputDateElements[i] ;
+      if (element.toString().length < 2){
+        element = '0'+element ;
+      }
+      if (output.length > 0) output += '/' ;
+      output += element ;
+    }
+    return output ;
   };
 })();
 
@@ -235,7 +244,8 @@ module.exports.init = function(controller,fromPath){
         var fieldlist = [] ;
         for (var i=0;i<viewConfig.fields.length;i++){
           var field = viewConfig.fields[i] ;
-          if (field.ines.indexOf('i')>-1) fieldlist.push(field.name) ;
+          //if (field.ines.indexOf('i')>-1) 
+          fieldlist.push(field.name) ;
         }
         var fieldSeparator = 's' ;
         if (req.param('CSV') == 'c' || req.param('CSV') == 's'|| req.param('CSV') == 't'){
@@ -1355,6 +1365,21 @@ module.exports.compileFileDisposition = function(controller){
 
 },
 
+module.exports.createFieldListFromAllRowsInArray = function(data){
+  var fieldListDictionary = {} ;
+  for (var i=0;i<data.length;i++){
+    var row = data[i].toJSON() ;
+    for (var field in row){
+      if (!fieldListDictionary[field]) fieldListDictionary[field] = true ;
+    }
+  }
+  var fieldList = [] ;
+  for (var field in fieldListDictionary){
+    fieldList.push(field) ;
+  }
+  return fieldList ;
+}
+
 module.exports.exportCSV = function(data,fieldSeparator,fieldList){
   /*
     data: json
@@ -1369,6 +1394,11 @@ module.exports.exportCSV = function(data,fieldSeparator,fieldList){
   if (data.length === 0) return ;
   var output = [] ;
   var fields = [] ;
+
+  if (!fieldList){
+    fieldList = module.exports.createFieldListFromAllRowsInArray(data) ; 
+  }
+
   for (var i=0;i<data.length;i++){
     var row = data[i].toJSON() ;
     var outputrow = [] ;

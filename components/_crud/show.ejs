@@ -39,7 +39,7 @@
 
 							<% if (field.type == 'link') { %>
 								<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
-								<p class="form-control-static"><a href="<%= field.protocol ? field.protocol : "" %><%= record[field.name] ? record[field.name] : "" %>"><%= record[field.name] ? record[field.name] : "" %></a></p>
+								<p class="form-control-static"><a target="<%= field.protocol ? (field.protocol == 'mailto:' ? '':'_blank'): '_blank' %>" class="btn btn-lg btn-default btn-block" href="<%= field.protocol ? field.protocol : "" %><%= record[field.name] ? record[field.name] : "" %>"><%= record[field.name] ? record[field.name] : "" %></a></p>
 							<% } %>
 
 							<% if (field.type == 'button'){ %>
@@ -58,6 +58,7 @@
 									<label class="control-label" for="<%= field.name %>"><%= field.label ? field.label : field.name %></label>
 									<%
 									var value = "" ;
+									var border_Radius = "border-radius:4px" ;
 									var lookUpUrl = false ;
 									if (record[field.name] !== undefined){
 										if (field.relationship){
@@ -73,14 +74,15 @@
 												value = record[field.name][fieldName] ;
 											}
 											lookUpUrl = "/" + field.relationship.entity + "/show/" + record[field.name].id ;
+											border_Radius="border-top-left-radius: 4px;border-bottom-left-radius: 4px;";
 										} else {
 											value = record[field.name] ;
 										}
 									}
 									%>
-									<div class="input-group">
+									<div class="input-group" style="width:100%">
 										<fieldset disabled>
-									      <input type="text" class="form-control" placeholder="<%= field.label ? field.label : field.name %>" name="<%= field.name %>" value="<%= value %>">
+									      <input type="text" class="form-control" style="<%= border_Radius %>" placeholder="<%= field.label ? field.label : field.name %>" name="<%= field.name %>" value="<%= value %>">
 									    </fieldset>
 									    <% if (lookUpUrl) { %>
 								      	<span class="input-group-btn">

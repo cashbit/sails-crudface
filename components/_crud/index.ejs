@@ -9,7 +9,7 @@
 				<a class="btn btm-sm btn-info" href="/<%= controller %>/new">Add</a>
 			</h3>
 			<h3 class="pull-right">
-				<a class="btn btm-sm btn-info" href="/<%= controller %>/csvexport">CSV</a>
+				<a class="btn btm-sm btn-info" href="/<%= controller %>/csvexport?__viewlimit=all">CSV</a>
 			</h3>
 		</div>
 	</div>
@@ -19,7 +19,7 @@
 		<form class="form" role="form" action="../<%= controller %>" method="GET">
 			<div class="row">
 				<div class="col-md-7">
-					<label class="control-label" for="__viewlimit">Free text</label>
+					<label class="control-label" for="__viewlimit">Search</label>
 					<input class="form-control" type="text" name="__freetext" value="<%= freetext %>" />
 				</div>
 <!--
@@ -112,7 +112,11 @@
 			<% var mode = "i" ; %>
 			<% _.each(fields, function(field) { %> 
 				<% if (field.ines.indexOf(mode) > -1) { %>
+					<% if (field.type == "link") { %>
+					<td class="<%= field.class ? field.class : '' %> <%= record[field.name] ? record[field.name].textAlign : "" %>"><a href="<%= record[field.name] ? record[field.name].crudRender(field) : '' %>"><%= record[field.name] ? record[field.name].crudRender(field) : "" %></a></td>
+					<% } else { %>
 					<td class="<%= field.class ? field.class : '' %> <%= record[field.name] ? record[field.name].textAlign : "" %>"><%= record[field.name] ? record[field.name].crudRender(field) : "" %></td>
+					<% } %>
 				<% } %>
 			<% }) %>	
 			<td>
