@@ -239,6 +239,19 @@ module.exports.init = function(controller,fromPath){
       });
     },
 
+    config : function(req,res,next){
+      // sends config to client
+      module.exports.sendConfig(req,res,next,controller,function(err,viewConfig){
+        if (!err){
+          res.header('Content-type','text/json');
+          res.send(viewConfig) ;
+        } else {
+          res.send(err) ;
+        }
+        
+      })
+    },
+
     csvexport: function(req,res,next){
       module.exports.searchView(req,res,next,controller,{},function(viewConfig){
         var fieldlist = [] ;
@@ -320,6 +333,18 @@ module.exports.removeUrlFromBreadCrumbs = function(req,url){
   - the list of fields for each crud operation (mandatory)
   - the layout of fields in the crud operations
 */
+
+module.exports.sendConfig = function(req,res,next,controller,cb){
+  var filepath = this.fromPath +"/" + controller.exports.globalId + "CrudConfig.js" ;
+  var fs = require('fs') ;
+  if (fs.existsSync(filepath)){
+    var fromFileString = fs.readFileSync(filepath) ;
+    var dataString = fromFileString.toString().replace(/(?:\/\*(?:[\s\S]*?)\*\/)|(?:([\s;])+\/\/(?:.*)$)/gm, '$1');
+    cb(null,dataString) ;
+  } else {
+    cb(new Error("Config not available!")) ;
+  }
+},
 
 module.exports.loadConfig = function(controller){
   var filepath = this.fromPath +"/" + controller.exports.globalId + "CrudConfig.js" ;
@@ -1241,6 +1266,7 @@ module.exports.updateAction = function(req,res,next,controller){
 
 module.exports.destroyAction = function(req,res,next,controller){
 
+console.log("ieccchime");
   this.loadConfig(controller) ;
 
   var returnUrl = req.param('returnUrl') ;
@@ -1423,6 +1449,10 @@ module.exports.exportCSV = function(data,fieldSeparator,fieldList){
     for (var f=0;f<fields.length;f++){
       var fieldName = fields[f];
       var fieldValue = row[fieldName] ;
+
+      if (typeof(fieldValue) == "boolean") {
+        fieldValue = (fieldValue ? '"X"' : '"-"');
+      }
       if (typeof(fieldValue) == 'string'){
         if (fieldValue.indexOf(fieldSeparator) > -1) fieldValue = '"' + fieldValue + '"' ;
         if (fieldValue.indexOf(rowSeparator) > -1) fieldValue = fieldValue.replace(rowSeparator,"\\"+rowSeparator) ;
